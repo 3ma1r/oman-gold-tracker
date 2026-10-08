@@ -1,1 +1,57 @@
-/* You can add global styles to this file, and also import other style files */
+/* Omit Preflight to preserve the generated starter's default layout. */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source("./");
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Generate foundation utilities even before the starter uses them. */
+@source inline("bg-page bg-card bg-secondary bg-oatmeal bg-taupe bg-cocoa text-primary text-muted text-espresso text-gold border-border font-sans dark:bg-page dark:bg-card dark:bg-secondary dark:text-primary dark:text-muted dark:text-gold dark:border-border");
+
+@theme {
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Tahoma, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --color-oatmeal: #EAE2D8;
+  --color-taupe: #B29C84;
+  --color-cocoa: #7A6657;
+  --color-espresso: #3B332D;
+}
+
+/* Semantic utilities follow the active palette, including nested .dark scopes. */
+@theme inline {
+  --color-page: var(--page-background);
+  --color-card: var(--card-surface);
+  --color-secondary: var(--secondary-surface);
+  --color-primary: var(--primary-text);
+  --color-muted: var(--secondary-text);
+  --color-border: var(--theme-border);
+  --color-gold: var(--gold-accent);
+}
+
+@layer base {
+  :root {
+    --page-background: #F8F5F0;
+    --card-surface: #FFFCF8;
+    --secondary-surface: #EAE2D8;
+    --primary-text: #3B332D;
+    --secondary-text: #7A6657;
+    --theme-border: #EAE2D8;
+    --gold-accent: #B99965;
+  }
+
+  .dark {
+    --page-background: #211D19;
+    --card-surface: #2D2722;
+    --secondary-surface: #383029;
+    --primary-text: #F5EEE5;
+    --secondary-text: #C7B8A7;
+    --theme-border: #51463B;
+    --gold-accent: #C4A578;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--page-background);
+    color: var(--primary-text);
+  }
+}
