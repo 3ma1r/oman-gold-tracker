@@ -1,4 +1,4 @@
-/* Omit Preflight to preserve the generated starter's default layout. */
+/* Use explicit base styles alongside Tailwind's theme and utilities. */
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities) source("./");
@@ -50,8 +50,177 @@
   }
 
   body {
+    margin: 0;
     font-family: var(--font-sans);
     background-color: var(--page-background);
     color: var(--primary-text);
+    line-height: 1.7;
   }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  h1, h2, h3, p, dl, dd { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  button, input, select { font: inherit; }
+  button, select { cursor: pointer; }
+  svg { display: block; flex-shrink: 0; }
+  :focus-visible {
+    outline: 3px solid var(--color-cocoa);
+    outline-offset: 4px;
+  }
+}
+
+/* Shared page layout keeps the eight section components deliberately simple. */
+:root { --anchor-offset: 112px; }
+section[id], main[id] { scroll-margin-top: var(--anchor-offset); }
+app-header, app-hero, app-todays-prices, app-price-card,
+app-gold-calculator, app-price-trend, app-price-history, app-footer { display: block; min-width: 0; }
+.page-shell { width: min(1160px, calc(100% - 64px)); margin-inline: auto; }
+.page-sections { display: grid; gap: 20px; padding-block: 20px 24px; }
+.panel {
+  padding: 24px;
+  border: 1px solid var(--theme-border);
+  border-radius: 14px;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-cocoa) 7%, transparent);
+}
+.section-heading { display: flex; align-items: flex-start; gap: 14px; }
+.section-icon { width: 32px; height: 36px; margin-block-start: 2px; }
+.section-heading h2 { font-size: 1.45rem; font-weight: 700; line-height: 1.6; }
+.section-heading p { font-size: .9rem; margin-block-start: 3px; }
+.skip-link {
+  position: fixed; inset-inline-start: 20px; top: -100px; z-index: 100;
+  padding: 10px 20px; border-radius: 8px;
+  background: var(--card-surface); color: var(--primary-text);
+}
+.skip-link:focus { top: 12px; }
+
+/* Header */
+app-header { position: sticky; top: 0; z-index: 50; }
+app-header header { border-block-end: 1px solid var(--theme-border); }
+.header-inner { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding-block: 14px; }
+.brand { display: flex; align-items: center; gap: 12px; flex-shrink: 0; border-radius: 4px; }
+.brand-mark { width: 58px; height: 44px; }
+.brand-name { display: block; font-size: 1.4rem; font-weight: 750; line-height: 1.4; }
+.brand-caption { display: block; font-size: .7rem; margin-block-start: 4px; }
+.header-nav { display: flex; flex-wrap: wrap; gap: 8px 30px; align-items: center; }
+.header-nav a { padding-block: 6px; font-size: .94rem; font-weight: 550; border-block-end: 2px solid transparent; }
+.header-nav a:hover { color: var(--color-cocoa); border-block-end-color: var(--gold-accent); }
+
+/* Warm gradient is a placeholder for the approved hero photograph. */
+.hero {
+  color: var(--color-oatmeal);
+  background:
+    radial-gradient(ellipse at 10% 95%, color-mix(in srgb, var(--color-gold) 40%, transparent), transparent 56%),
+    linear-gradient(110deg, var(--color-taupe) 0%, var(--color-cocoa) 38%, var(--color-espresso) 78%);
+}
+.hero-inner { padding-block: 20px 22px; }
+.breadcrumb ol { display: flex; flex-wrap: wrap; gap: 10px; padding: 0; margin: 0; list-style: none; font-size: .8rem; }
+.breadcrumb a:hover { text-decoration: underline; }
+.hero-copy { max-width: 740px; padding-block: 22px 18px; }
+.hero h1 { color: var(--card-surface); font-size: clamp(2rem, 4vw, 3.35rem); font-weight: 750; line-height: 1.4; }
+.hero-copy p { max-width: 650px; font-size: 1.15rem; line-height: 1.85; margin-block: 10px 16px; }
+.sample-badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 14px; font-size: .8rem; font-weight: 600; }
+.sample-badge svg { width: 17px; height: 17px; }
+.hero-details {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 680px; margin-inline-start: auto; padding: 14px 8px;
+  border: 1px solid color-mix(in srgb, var(--color-oatmeal) 38%, transparent);
+  border-radius: 12px; background: color-mix(in srgb, var(--color-espresso) 34%, transparent);
+  color: var(--card-surface);
+}
+.hero-details > div { padding-inline: 14px; text-align: center; }
+.hero-details > div + div { border-inline-start: 1px solid color-mix(in srgb, var(--color-oatmeal) 30%, transparent); }
+.hero-details dt { font-size: .75rem; opacity: .85; margin-block-end: 4px; }
+.hero-details dd { font-size: .88rem; }
+
+/* Today's price cards */
+.price-card { min-height: 170px; text-align: center; padding: 22px 16px 20px; }
+.price-card-heading { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.price-card-heading svg { width: 28px; height: 25px; }
+.price-card h3 { font-size: 1rem; font-weight: 650; }
+.price-value { font-size: 2.8rem; font-weight: 650; line-height: 1.35; margin-block: 8px 4px; }
+.price-unit { font-size: .88rem; }
+
+/* Calculator */
+.calculator-layout > div { min-width: 0; }
+.calculator-fields { margin-block-start: 30px; align-items: end; }
+.field-group { display: grid; gap: 6px; min-width: 0; }
+.field-group label { font-size: .92rem; font-weight: 600; }
+.field { width: 100%; min-height: 48px; padding: 8px 14px; border: 1px solid var(--color-taupe); border-radius: 9px; }
+.field::placeholder { color: var(--secondary-text); opacity: .75; }
+.calculate-button { min-height: 48px; min-width: 106px; padding: 8px 22px; border: 0; border-radius: 9px; background: var(--color-cocoa); color: var(--card-surface); }
+.calculate-button:disabled { cursor: not-allowed; opacity: .85; }
+.control-note { margin-block-start: 10px; font-size: .75rem; }
+.calculator-result { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 216px; padding: 20px; border-radius: 11px; }
+.result-icon { width: 40px; height: 40px; margin-block-end: 7px; }
+.calculator-result h3 { font-size: 1rem; font-weight: 650; }
+.result-divider { width: 86%; height: 1px; background: var(--color-taupe); opacity: .5; margin-block: 14px; }
+.result-value { font-size: 2rem; line-height: 1.4; }
+.calculator-result > p:last-child { font-size: .88rem; }
+
+/* Trend controls and intentional chart empty state */
+.purity-tabs { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; border: 0; padding: 0; margin: 20px 0 0; }
+.purity-tab { position: relative; flex: 1; min-width: 76px; cursor: pointer; }
+.purity-tab input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.purity-tab span { display: block; padding: 9px 8px; text-align: center; font-size: .87rem; border-radius: 8px; background: color-mix(in srgb, var(--secondary-surface) 60%, var(--card-surface)); }
+.purity-tab:has(input:checked) span { background: var(--color-cocoa); color: var(--card-surface); }
+.purity-tab:has(input:focus-visible) span { outline: 3px solid var(--color-cocoa); outline-offset: 3px; }
+.trend-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; text-align: center; }
+.trend-stats > div { padding-inline: 12px; }
+.trend-stats > div + div { border-inline-start: 1px solid var(--theme-border); }
+.trend-stats dt { font-size: .86rem; }
+.trend-stats dd { font-size: 1.7rem; font-weight: 650; margin-block: 2px; }
+.trend-stats span { font-size: .8rem; }
+.chart-empty {
+  display: grid; place-items: center; min-height: 240px; margin-block-start: 28px;
+  border: 1px solid var(--theme-border); border-radius: 9px;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--secondary-surface) 28%, transparent));
+  text-align: center; color: var(--secondary-text); font-size: .92rem;
+}
+.empty-icon { width: 46px; height: 46px; margin: 0 auto 12px; }
+
+/* Semantic history table: only this container scrolls on small screens. */
+.history-scroll { overflow-x: auto; margin-block-start: 20px; border: 1px solid var(--theme-border); border-radius: 9px; }
+.history-scroll table { width: 100%; min-width: 660px; border-collapse: collapse; font-size: .9rem; }
+.history-scroll th, .history-scroll td { padding: 12px 18px; text-align: center; }
+.history-scroll th { font-weight: 650; white-space: nowrap; }
+.history-scroll th:first-child { text-align: start; }
+.history-scroll .history-empty { height: 116px; text-align: center; }
+
+/* Footer */
+.site-footer { border-block-start: 1px solid var(--theme-border); }
+.footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-block: 22px; }
+.footer-brand { font-size: 1.12rem; font-weight: 650; }
+.footer-inner > div > p:last-child, .copyright { font-size: .76rem; }
+
+@media (max-width: 767px) {
+  :root { --anchor-offset: 192px; }
+  .page-shell { width: calc(100% - 32px); }
+  .header-inner { flex-direction: column; align-items: stretch; gap: 10px; padding-block: 12px; }
+  .brand { align-self: flex-start; }
+  .brand-mark { width: 48px; height: 37px; }
+  .brand-name { font-size: 1.18rem; }
+  .header-nav { gap: 4px 20px; }
+  .header-nav a { font-size: .8rem; }
+  .hero-inner { padding-block: 18px 22px; }
+  .hero-copy { padding-block-start: 24px; }
+  .hero-copy p { font-size: 1rem; }
+  .hero-details { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 0; margin-block-start: 8px; }
+  .hero-details > div:nth-child(3) { border-inline-start: 0; }
+  .hero-details > div { padding-inline: 10px; }
+  .hero-details dt { font-size: .7rem; }
+  .hero-details dd { font-size: .8rem; }
+  .panel { padding: 20px 16px; }
+  .price-card { min-height: 155px; }
+  .section-heading { gap: 10px; }
+  .section-heading h2 { font-size: 1.25rem; }
+  .section-heading p { font-size: .8rem; }
+  .section-icon { width: 27px; height: 31px; }
+  .calculator-fields { margin-block-start: 22px; }
+  .calculate-button { width: 100%; }
+  .trend-stats > div { padding-inline: 5px; }
+  .trend-stats dt, .trend-stats span { font-size: .72rem; }
+  .chart-empty { min-height: 205px; padding: 16px; }
+  .purity-tab { min-width: 58px; }
+  .purity-tab span { font-size: .77rem; padding-inline: 4px; }
+  .footer-inner { flex-direction: column; align-items: flex-start; gap: 12px; }
 }
