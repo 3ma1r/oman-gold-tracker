@@ -1,4 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { GoldPriceService } from '../services/gold-price.service';
+import { formatSampleDate } from '../services/gold-price-format';
 
 @Component({
   selector: 'app-hero',
@@ -25,7 +27,7 @@ import { Component } from '@angular/core';
           </span>
         </div>
         <dl class="hero-details">
-          <div><dt>تاريخ البيانات التجريبية</dt><dd>—</dd></div>
+          <div><dt>تاريخ البيانات التجريبية</dt><dd><time [attr.datetime]="goldPrices.sampleDate">{{ sampleDateLabel }}</time></dd></div>
           <div><dt>السوق</dt><dd>سلطنة عُمان</dd></div>
           <div><dt>العملة</dt><dd>ريال عُماني <bdi>(OMR)</bdi></dd></div>
           <div><dt>الوحدة</dt><dd>السعر لكل غرام</dd></div>
@@ -34,4 +36,7 @@ import { Component } from '@angular/core';
     </section>
   `,
 })
-export class Hero {}
+export class Hero {
+  protected readonly goldPrices = inject(GoldPriceService);
+  protected readonly sampleDateLabel = formatSampleDate(this.goldPrices.sampleDate);
+}

@@ -1,8 +1,11 @@
 import { Component, input } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
+import { GoldPurity } from '../models/gold-price';
 
 @Component({
   selector: 'app-price-card',
   standalone: true,
+  imports: [DecimalPipe],
   template: `
     <article class="price-card panel bg-card text-primary" [attr.aria-labelledby]="'price-' + purity()">
       <div class="price-card-heading">
@@ -11,11 +14,12 @@ import { Component, input } from '@angular/core';
         </svg>
         <h3 [id]="'price-' + purity()">ذهب {{ purity() }} قيراط</h3>
       </div>
-      <p class="price-value" aria-label="السعر غير متاح">—</p>
+      <p class="price-value"><bdi>{{ price() | number:'1.3-3':'en-US' }}</bdi></p>
       <p class="price-unit text-muted">ريال عُماني / غرام</p>
     </article>
   `,
 })
 export class PriceCard {
-  readonly purity = input.required<number>();
+  readonly purity = input.required<GoldPurity>();
+  readonly price = input.required<number>();
 }

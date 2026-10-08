@@ -1,8 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
+import { GoldPriceService } from '../services/gold-price.service';
+import { formatSampleDate } from '../services/gold-price-format';
 
 @Component({
   selector: 'app-price-history',
   standalone: true,
+  imports: [DecimalPipe],
   template: `
     <section id="history" class="panel bg-card" aria-labelledby="history-title">
       <div class="section-heading">
@@ -12,7 +16,7 @@ import { Component } from '@angular/core';
         </svg>
         <div>
           <h2 id="history-title">سجل الأسعار</h2>
-          <p class="text-muted">سجل أسعار الذهب في سلطنة عُمان، بالريال العُماني لكل غرام.</p>
+          <p class="text-muted">سجل من 30 يوماً من البيانات التجريبية، بالريال العُماني لكل غرام. ليست أسعار السوق الحالية.</p>
         </div>
       </div>
       <div class="history-scroll" tabindex="0" role="region" aria-label="جدول سجل الأسعار — قابل للتمرير أفقياً">
@@ -28,11 +32,22 @@ import { Component } from '@angular/core';
             </tr>
           </thead>
           <tbody>
-            <tr><td colspan="5" class="history-empty text-muted">لا توجد بيانات تاريخية بعد</td></tr>
+            @for (day of goldPrices.history; track day.date) {
+              <tr>
+                <th scope="row"><time [attr.datetime]="day.date">{{ formatDate(day.date) }}</time></th>
+                <td><bdi>{{ day.prices[24] | number:'1.3-3':'en-US' }}</bdi></td>
+                <td><bdi>{{ day.prices[22] | number:'1.3-3':'en-US' }}</bdi></td>
+                <td><bdi>{{ day.prices[21] | number:'1.3-3':'en-US' }}</bdi></td>
+                <td><bdi>{{ day.prices[18] | number:'1.3-3':'en-US' }}</bdi></td>
+              </tr>
+            }
           </tbody>
         </table>
       </div>
     </section>
   `,
 })
-export class PriceHistory {}
+export class PriceHistory {
+  protected readonly goldPrices = inject(GoldPriceService);
+  protected readonly formatDate = formatSampleDate;
+}

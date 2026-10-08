@@ -33,7 +33,7 @@ import { Component } from '@angular/core';
             </div>
             <button class="calculate-button" type="button" disabled aria-describedby="calculator-note">احسب</button>
           </div>
-          <p id="calculator-note" class="control-note text-muted">ستتوفر الحاسبة عند إضافة بيانات الأسعار.</p>
+          <p id="calculator-note" class="control-note text-muted">الحاسبة قيد الإعداد، ولا تُجري حسابات بعد.</p>
         </div>
         <div class="calculator-result bg-secondary" aria-labelledby="result-title">
           <svg class="result-icon text-gold" viewBox="0 0 40 40" fill="none" aria-hidden="true">
