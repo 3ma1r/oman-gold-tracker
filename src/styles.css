@@ -149,14 +149,20 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 .field { width: 100%; min-height: 48px; padding: 8px 14px; border: 1px solid var(--color-taupe); border-radius: 9px; }
 .field::placeholder { color: var(--secondary-text); opacity: .75; }
 .calculate-button { min-height: 48px; min-width: 106px; padding: 8px 22px; border: 0; border-radius: 9px; background: var(--color-cocoa); color: var(--card-surface); }
-.calculate-button:disabled { cursor: not-allowed; opacity: .85; }
+.calculate-button:hover { background: var(--color-espresso); }
+.validation-message { font-size: .85rem; font-weight: 600; }
+.validation-message:not(:empty) { margin-block-start: 10px; }
+.field[aria-invalid="true"] { border-color: var(--color-cocoa); box-shadow: inset 0 0 0 1px var(--color-cocoa); }
 .control-note { margin-block-start: 10px; font-size: .75rem; }
 .calculator-result { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 216px; padding: 20px; border-radius: 11px; }
 .result-icon { width: 40px; height: 40px; margin-block-end: 7px; }
 .calculator-result h3 { font-size: 1rem; font-weight: 650; }
 .result-divider { width: 86%; height: 1px; background: var(--color-taupe); opacity: .5; margin-block: 14px; }
-.result-value { font-size: 2rem; line-height: 1.4; }
+.result-value { font-size: 2rem; line-height: 1.4; max-width: 100%; overflow-wrap: anywhere; }
 .calculator-result > p:last-child { font-size: .88rem; }
+.calculation-details { width: 100%; margin-block-start: 14px; font-size: .8rem; }
+.calculation-details > div { display: flex; justify-content: space-between; gap: 12px; padding-block: 3px; }
+.calculation-details dd { text-align: end; min-width: 0; overflow-wrap: anywhere; }
 
 /* Trend controls and intentional chart empty state */
 .purity-tabs { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; border: 0; padding: 0; margin: 20px 0 0; }

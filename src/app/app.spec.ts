@@ -67,11 +67,34 @@ describe('App', () => {
     expect(compiled.querySelector('.price-data-note')?.textContent).toContain('ليست أسعار السوق الحالية');
   });
 
-  it('preserves the inactive calculator and chart placeholder', () => {
+  it('calculates with the same latest price displayed by each card and history column', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector<HTMLButtonElement>('.calculate-button')?.disabled).toBeTrue();
+    const selector = compiled.querySelector<HTMLSelectElement>('#gold-purity')!;
+    const weight = compiled.querySelector<HTMLInputElement>('#gold-weight')!;
+    const form = compiled.querySelector<HTMLFormElement>('#calculator form')!;
+    const cards = compiled.querySelectorAll('app-price-card .price-value');
+    const cells = compiled.querySelectorAll('tbody tr:first-child td');
+
+    [24, 22, 21, 18].forEach((purity, index) => {
+      selector.value = String(purity);
+      selector.dispatchEvent(new Event('change', { bubbles: true }));
+      weight.value = '1';
+      weight.dispatchEvent(new Event('input', { bubbles: true }));
+      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      fixture.detectChanges();
+      const total = compiled.querySelector('.result-value')?.textContent?.trim();
+      expect(total).toBe(cards[index].textContent?.trim());
+      expect(total).toBe(cells[index].textContent?.trim());
+    });
+  });
+
+  it('preserves the initial calculator empty state and chart placeholder', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector<HTMLButtonElement>('.calculate-button')?.disabled).toBeFalse();
     expect(compiled.querySelector('.result-value')?.textContent).toBe('—');
     expect(compiled.querySelectorAll('.trend-stats dd').length).toBe(3);
     compiled.querySelectorAll('.trend-stats dd').forEach(stat => expect(stat.textContent).toBe('—'));
