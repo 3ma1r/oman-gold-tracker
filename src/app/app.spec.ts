@@ -90,14 +90,30 @@ describe('App', () => {
     });
   });
 
-  it('preserves the initial calculator empty state and chart placeholder', () => {
+  it('preserves the initial calculator empty state and renders the sample chart', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector<HTMLButtonElement>('.calculate-button')?.disabled).toBeFalse();
     expect(compiled.querySelector('.result-value')?.textContent).toBe('—');
     expect(compiled.querySelectorAll('.trend-stats dd').length).toBe(3);
-    compiled.querySelectorAll('.trend-stats dd').forEach(stat => expect(stat.textContent).toBe('—'));
-    expect(compiled.querySelector('.chart-empty')?.textContent).toContain('لا توجد بيانات للرسم البياني بعد');
+    expect(compiled.querySelector('.price-chart polyline')?.getAttribute('points')?.split(' ').length).toBe(30);
+    expect(compiled.querySelector('.chart-empty')).toBeNull();
+  });
+
+  it('matches the latest chart price to each purity card and newest history row', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const cards = compiled.querySelectorAll('app-price-card .price-value');
+    const cells = compiled.querySelectorAll('tbody tr:first-child td');
+
+    [24, 22, 21, 18].forEach((purity, index) => {
+      compiled.querySelector<HTMLButtonElement>(`#trends button[data-purity="${purity}"]`)!.click();
+      fixture.detectChanges();
+      const latest = compiled.querySelector('.trend-stats dd')?.textContent?.trim();
+      expect(latest).toBe(cards[index].textContent?.trim());
+      expect(latest).toBe(cells[index].textContent?.trim());
+    });
   });
 });
