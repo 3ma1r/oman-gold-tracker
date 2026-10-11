@@ -151,7 +151,7 @@ describe('PriceTrend', () => {
       element.querySelector<HTMLButtonElement>(`button[data-purity="${purity}"]`)!.click();
       fixture.detectChanges();
       const values = SAMPLE_GOLD_PRICES.map(day => day.prices[purity]);
-      const stats = element.querySelectorAll('.trend-stats dd');
+      const stats = element.querySelectorAll('.trend-stats dd > bdi');
       expect(component.selectedPurity()).toBe(purity);
       expect(stats[0].textContent?.trim()).toBe(formatPrice(values[29]));
       expect(stats[1].textContent?.trim()).toBe(formatPrice(Math.max(...values)));
@@ -209,7 +209,7 @@ describe('PriceTrend', () => {
     const { element } = render([]);
     expect(element.querySelector('.price-chart')).toBeNull();
     expect(element.querySelector('.chart-empty')?.textContent).toContain('لا توجد بيانات');
-    element.querySelectorAll('.trend-stats dd').forEach(stat => expect(stat.textContent).toBe('—'));
+    element.querySelectorAll('.trend-stats dd > bdi').forEach(stat => expect(stat.textContent).toBe('—'));
     expect(element.textContent).not.toMatch(/NaN|Infinity/);
   });
 
@@ -219,6 +219,19 @@ describe('PriceTrend', () => {
     expect(element.querySelector('.chart-area')).toBeNull();
     expect(element.querySelector('polyline')?.getAttribute('points')?.split(' ').length).toBe(1);
     expect(element.querySelector('.trend-comparison')?.textContent).toContain('لا تتوفر بيانات لليوم السابق');
+  });
+
+  it('keeps each statistic and its localized unit inside the definition value', () => {
+    const { fixture, element } = render();
+    const lang = TestBed.inject(LanguageService);
+    for (const language of ['ar', 'en'] as const) {
+      lang.setLanguage(language); fixture.detectChanges();
+      element.querySelectorAll('.trend-stats > div').forEach(group => {
+        expect(Array.from(group.children, child => child.tagName)).toEqual(['DT', 'DD']);
+        expect(group.querySelector('dd > bdi')).not.toBeNull();
+        expect(group.querySelector('dd > .stat-unit')?.textContent).toBe(lang.t('rialPerGram'));
+      });
+    }
   });
 
   it('selects the nearest date at different SVG scales and clamps endpoints', () => {

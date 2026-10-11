@@ -77,7 +77,7 @@ describe('Dashboard language switching', () => {
       fixture.detectChanges();
       const text = TRANSLATIONS[selection];
       expect(element.querySelector('.skip-link')?.textContent).toBe(text.skipContent);
-      expect(element.querySelector('.brand-name')?.textContent).toBe(text.siteName);
+      expect(element.querySelector('.brand-name > span:first-child')?.textContent).toBe(text.siteName);
       expect(element.querySelector('.brand')?.getAttribute('aria-label')).toBe(text.brandHome);
       expect(element.querySelector('.header-nav')?.getAttribute('aria-label')).toBe(text.mainNavigation);
       expect(element.querySelector('.header-nav a[href="#prices"]')?.textContent).toBe(text.prices);
@@ -179,7 +179,7 @@ describe('Dashboard language switching', () => {
         expect(element.querySelectorAll('.price-value')[index].textContent).toBe(expected);
         expect(element.querySelectorAll('tbody tr:first-child td')[index].textContent).toBe(expected);
         expect(element.querySelector('.result-value')?.textContent).toBe(expected);
-        expect(element.querySelector('.trend-stats dd')?.textContent).toBe(expected);
+        expect(element.querySelector('.trend-stats dd > bdi')?.textContent).toBe(expected);
       }
       expect(prices.days).toBe(dataset);
       expect(element.querySelectorAll('tbody tr').length).toBe(30);

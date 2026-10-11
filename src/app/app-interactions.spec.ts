@@ -119,6 +119,16 @@ describe('Dashboard interactions', () => {
     }
   });
 
+  it('keeps the assignment sample-data badge visible and translated in the sticky header', () => {
+    const lang = TestBed.inject(LanguageService);
+    for (const language of ['ar', 'en'] as const) {
+      lang.setLanguage(language); fixture.detectChanges();
+      const badge = element.querySelector('app-header .header-sample-badge')!;
+      expect(badge.textContent).toBe(lang.t('sampleData'));
+      expect(getComputedStyle(badge).display).not.toBe('none');
+    }
+  });
+
   it('tracks scrolling at the sticky anchor boundary and removes its native listeners', async () => {
     const frame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
     await frame(); await frame();

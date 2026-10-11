@@ -15,7 +15,7 @@ import { ThemeService } from '../services/theme.service';
             <path d="M20 29c12 1 13 15 31 16-9-5-12-18-22-22" fill="currentColor" />
           </svg>
           <span>
-            <span class="brand-name">{{ lang.t('siteName') }}</span>
+            <span class="brand-name"><span>{{ lang.t('siteName') }}</span><span class="header-sample-badge bg-secondary text-primary">{{ lang.t('sampleData') }}</span></span>
             <span class="brand-caption text-muted">{{ lang.t('siteCaption') }}</span>
           </span>
         </a>

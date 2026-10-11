@@ -113,7 +113,7 @@ describe('App', () => {
     [24, 22, 21, 18].forEach((purity, index) => {
       compiled.querySelector<HTMLButtonElement>(`#trends button[data-purity="${purity}"]`)!.click();
       fixture.detectChanges();
-      const latest = compiled.querySelector('.trend-stats dd')?.textContent?.trim();
+      const latest = compiled.querySelector('.trend-stats dd > bdi')?.textContent?.trim();
       expect(latest).toBe(cards[index].textContent?.trim());
       expect(latest).toBe(cells[index].textContent?.trim());
     });

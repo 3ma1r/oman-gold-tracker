@@ -138,8 +138,9 @@ app-header header { border-block-end: 1px solid var(--theme-border); box-shadow:
 .header-inner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 24px; padding-block: 14px; }
 .brand { display: flex; align-items: center; gap: 12px; min-width: 0; border-radius: 4px; }
 .brand-mark { width: 58px; height: 44px; }
-.brand-name { display: block; font-size: 1.4rem; font-weight: 750; line-height: 1.4; }
+.brand-name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 1.4rem; font-weight: 750; line-height: 1.4; }
 .brand-caption { display: block; font-size: .7rem; margin-block-start: 4px; }
+.header-sample-badge { border-radius: 999px; padding-inline: 7px; font-size: .65rem; font-weight: 500; line-height: 1.7; white-space: nowrap; }
 .header-nav { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; justify-content: center; min-width: 0; }
 .header-nav a { padding-block: 6px; font-size: .94rem; font-weight: 550; border-block-end: 2px solid transparent; }
 .header-nav a:hover, .header-nav a[aria-current="location"] { color: var(--interactive-accent); border-block-end-color: var(--gold-accent); }
@@ -311,6 +312,7 @@ app-header header { border-block-end: 1px solid var(--theme-border); box-shadow:
 .trend-stats dt { font-size: .86rem; }
 .trend-stats dd { font-size: clamp(1.05rem, 4vw, 1.7rem); font-weight: 650; margin-block: 2px; font-variant-numeric: tabular-nums; }
 .trend-stats span { font-size: .8rem; }
+.trend-stats .stat-unit { display: block; font-weight: 400; margin-block-start: 2px; }
 .trend-comparison { margin-block-start: 24px; padding: 16px; border: 1px solid var(--theme-border); border-radius: 10px; background: color-mix(in srgb, var(--secondary-surface) 28%, var(--card-surface)); }
 .comparison-heading { font-size: .85rem; font-weight: 600; margin-block-end: 10px; }
 .comparison-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }

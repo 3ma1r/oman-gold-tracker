@@ -64,7 +64,7 @@ interface GoldCalculation {
           @if (result; as calculation) {
             <p class="result-value result-entrance"><bdi>{{ lang.price(calculation.total) }}</bdi></p>
           } @else {
-            <p class="result-value" [attr.aria-label]="lang.t('calculationEmpty')">—</p>
+            <p class="result-value" role="img" [attr.aria-label]="lang.t('calculationEmpty')">—</p>
           }
           <p class="text-muted">{{ lang.t('rial') }}</p>
           @if (result; as calculation) {

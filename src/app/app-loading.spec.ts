@@ -123,7 +123,7 @@ describe('Dashboard loading and motion', () => {
     fixture.detectChanges();
     expect(prices.loading()).toBeFalse();
     expect(chart.selectedPurity()).toBe(18);
-    expect(element.querySelector('.trend-stats dd')?.textContent).toBe(language.price(prices.latest!.prices[18]));
+    expect(element.querySelector('.trend-stats dd > bdi')?.textContent).toBe(language.price(prices.latest!.prices[18]));
     for (const purity of GOLD_PURITIES) {
       chart.selectedPurity.set(purity);
       language.toggle();
@@ -261,7 +261,7 @@ describe('Dashboard loading and motion', () => {
       chart.selectedPurity.set(21);
       fixture.detectChanges();
       expect(element.querySelector('svg desc')?.textContent).toBe(chart.chartDescription());
-      expect(element.querySelector('.trend-stats dd')?.textContent).toBe(TestBed.inject(LanguageService).price(chart.trend().latest));
+      expect(element.querySelector('.trend-stats dd > bdi')?.textContent).toBe(TestBed.inject(LanguageService).price(chart.trend().latest));
     } finally { frame.remove(); }
   }));
 });

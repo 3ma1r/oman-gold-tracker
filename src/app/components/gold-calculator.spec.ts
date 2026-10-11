@@ -55,6 +55,16 @@ describe('GoldCalculator', () => {
     expect(weight.step).toBe('any');
   });
 
+  it('gives the visual empty-state symbol a nameable semantic role', () => {
+    const empty = element.querySelector('.result-value')!;
+    expect(empty.getAttribute('role')).toBe('img');
+    expect(empty.getAttribute('aria-label')).toBeTruthy();
+    expect(element.querySelector('.calculator-result')?.getAttribute('aria-live')).toBe('polite');
+    enterWeight('1'); submit();
+    expect(element.querySelector('.result-value')?.hasAttribute('role')).toBeFalse();
+    expect(element.querySelector('.result-value')?.hasAttribute('aria-label')).toBeFalse();
+  });
+
   for (const karat of [18, 21, 22, 24] as const) {
     it(`calculates ${karat}K using the latest shared sample price`, () => {
       selectPurity(karat);
