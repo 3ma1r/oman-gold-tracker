@@ -18,7 +18,7 @@ import { LanguageService } from '../services/language.service';
         <div class="hero-copy">
           <h1 id="hero-title">{{ lang.t('heroTitle') }}</h1>
           <p>{{ lang.t('heroDescription') }}</p>
-          <span class="sample-badge bg-oatmeal text-espresso">
+          <span class="sample-badge bg-secondary text-primary">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6" />
               <path d="M12 11v6m0-10v1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />

@@ -6,16 +6,20 @@ import { PriceTrend } from './components/price-trend';
 import { Language, TRANSLATIONS } from './data/translations';
 import { GoldPriceService } from './services/gold-price.service';
 import { LanguageService } from './services/language.service';
+import { ThemeService } from './services/theme.service';
 
 describe('Dashboard language switching', () => {
   let fixture: ComponentFixture<App>;
   let element: HTMLElement;
   let language: LanguageService;
   let prices: GoldPriceService;
-  let original: { lang: string; dir: string; title: string };
+  let original: { lang: string; dir: string; title: string; className: string; scheme: string };
 
   beforeEach(async () => {
-    original = { lang: document.documentElement.lang, dir: document.documentElement.dir, title: document.title };
+    original = {
+      lang: document.documentElement.lang, dir: document.documentElement.dir, title: document.title,
+      className: document.documentElement.className, scheme: document.documentElement.style.colorScheme,
+    };
     spyOn(Storage.prototype, 'getItem').and.returnValue(null);
     spyOn(Storage.prototype, 'setItem');
     await TestBed.configureTestingModule({ imports: [App] }).compileComponents();
@@ -30,6 +34,8 @@ describe('Dashboard language switching', () => {
     document.documentElement.lang = original.lang;
     document.documentElement.dir = original.dir;
     document.title = original.title;
+    document.documentElement.className = original.className;
+    document.documentElement.style.colorScheme = original.scheme;
   });
 
   function toggle(): void {
@@ -182,54 +188,63 @@ describe('Dashboard language switching', () => {
     }
   });
 
-  it('renders mobile and desktop RTL/LTR layouts without page overflow and keeps the chart LTR', () => {
+  it('renders light/dark mobile and desktop RTL/LTR layouts without page overflow and keeps the chart LTR', () => {
     // Native same-origin frames provide real viewport/media-query layout in ChromeHeadless.
     // Copy only the app stylesheet, not the Jasmine runner UI styles.
     const appCss = Array.from(document.styleSheets)
       .map(sheet => Array.from(sheet.cssRules).map(rule => rule.cssText).join('\n'))
       .filter(css => css.includes('.page-shell')).join('\n');
     expect(appCss).not.toBe('');
+    const theme = TestBed.inject(ThemeService);
     for (const width of [320, 390, 768, 1440]) {
       for (const selection of ['ar', 'en'] as const) {
-        language.setLanguage(selection);
-        fixture.detectChanges();
-        const frame = document.createElement('iframe');
-        frame.title = 'Bilingual responsive layout test';
-        frame.style.cssText = `width:${width}px;height:1000px;border:0;display:block`;
-        document.body.appendChild(frame);
-        try {
-          const frameDocument = frame.contentDocument!;
-          frameDocument.documentElement.lang = selection;
-          frameDocument.documentElement.dir = selection === 'ar' ? 'rtl' : 'ltr';
-          const style = frameDocument.createElement('style');
-          style.textContent = appCss;
-          frameDocument.head.appendChild(style);
-          frameDocument.body.appendChild(element.cloneNode(true));
-          const rect = (selector: string) => frameDocument.querySelector(selector)!.getBoundingClientRect();
-          const context = `${selection} at ${width}px`;
-          expect(frameDocument.documentElement.scrollWidth).withContext(context).toBeLessThanOrEqual(width);
-          expect(rect('.language-button').width).withContext(context).toBeGreaterThanOrEqual(44);
-          const inputs = rect('.calculator-layout > div:first-child');
-          const result = rect('.calculator-result');
-          if (width >= 1024) {
-            expect(Math.abs(inputs.top - result.top)).withContext(context).toBeLessThan(1);
-            if (selection === 'ar') {
-              expect(inputs.left).withContext(context).toBeGreaterThan(result.left);
+        for (const mode of ['light', 'dark'] as const) {
+          theme.setTheme(mode);
+          language.setLanguage(selection);
+          fixture.detectChanges();
+          const frame = document.createElement('iframe');
+          frame.title = 'Bilingual responsive layout test';
+          frame.style.cssText = `width:${width}px;height:1000px;border:0;display:block`;
+          document.body.appendChild(frame);
+          try {
+            const frameDocument = frame.contentDocument!;
+            frameDocument.documentElement.lang = selection;
+            frameDocument.documentElement.dir = selection === 'ar' ? 'rtl' : 'ltr';
+            frameDocument.documentElement.classList.toggle('dark', mode === 'dark');
+            const style = frameDocument.createElement('style');
+            style.textContent = appCss;
+            frameDocument.head.appendChild(style);
+            frameDocument.body.appendChild(element.cloneNode(true));
+            const rect = (selector: string) => frameDocument.querySelector(selector)!.getBoundingClientRect();
+            const context = `${mode} / ${selection} at ${width}px`;
+            expect(frameDocument.documentElement.scrollWidth).withContext(context).toBeLessThanOrEqual(width);
+            expect(rect('.language-button').width).withContext(context).toBeGreaterThanOrEqual(44);
+            expect(rect('.theme-button').width).withContext(context).toBeGreaterThanOrEqual(44);
+            expect(frame.contentWindow!.getComputedStyle(frameDocument.documentElement).colorScheme).withContext(context).toBe(mode);
+            const offset = parseFloat(frame.contentWindow!.getComputedStyle(frameDocument.documentElement).getPropertyValue('--anchor-offset'));
+            expect(rect('app-header').height).withContext(`${context}: sticky anchor clearance`).toBeLessThanOrEqual(offset);
+            const inputs = rect('.calculator-layout > div:first-child');
+            const result = rect('.calculator-result');
+            if (width >= 1024) {
+              expect(Math.abs(inputs.top - result.top)).withContext(context).toBeLessThan(1);
+              if (selection === 'ar') {
+                expect(inputs.left).withContext(context).toBeGreaterThan(result.left);
+              } else {
+                expect(inputs.left).withContext(context).toBeLessThan(result.left);
+              }
             } else {
-              expect(inputs.left).withContext(context).toBeLessThan(result.left);
+              expect(result.top).withContext(context).toBeGreaterThan(inputs.bottom);
             }
-          } else {
-            expect(result.top).withContext(context).toBeGreaterThan(inputs.bottom);
+            const chart = frameDocument.querySelector<HTMLElement>('.chart-layout')!;
+            expect(frame.contentWindow!.getComputedStyle(chart).direction).withContext(context).toBe('ltr');
+            expect(rect('.chart-dates > span:first-child').left).withContext(context)
+              .toBeLessThan(rect('.chart-dates > span:last-child').left);
+            const history = frameDocument.querySelector<HTMLElement>('.history-scroll')!;
+            expect(frame.contentWindow!.getComputedStyle(history).overflowX).withContext(context).toBe('auto');
+            if (width < 768) { expect(history.scrollWidth).withContext(context).toBeGreaterThan(history.clientWidth); }
+          } finally {
+            frame.remove();
           }
-          const chart = frameDocument.querySelector<HTMLElement>('.chart-layout')!;
-          expect(frame.contentWindow!.getComputedStyle(chart).direction).withContext(context).toBe('ltr');
-          expect(rect('.chart-dates > span:first-child').left).withContext(context)
-            .toBeLessThan(rect('.chart-dates > span:last-child').left);
-          const history = frameDocument.querySelector<HTMLElement>('.history-scroll')!;
-          expect(frame.contentWindow!.getComputedStyle(history).overflowX).withContext(context).toBe('auto');
-          if (width < 768) { expect(history.scrollWidth).withContext(context).toBeGreaterThan(history.clientWidth); }
-        } finally {
-          frame.remove();
         }
       }
     }

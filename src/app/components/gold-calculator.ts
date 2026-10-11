@@ -18,7 +18,7 @@ interface GoldCalculation {
       <div class="calculator-layout grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-8">
         <div>
           <div class="section-heading">
-            <svg class="section-icon text-cocoa" viewBox="0 0 32 36" fill="none" aria-hidden="true">
+            <svg class="section-icon text-accent" viewBox="0 0 32 36" fill="none" aria-hidden="true">
               <rect x="5" y="2" width="22" height="32" rx="3" stroke="currentColor" stroke-width="2.2" />
               <path d="M10 8h12v6H10zM10 20h2m4 0h2m4 0h0M10 26h2m4 0h2m4 0h0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
             </svg>
@@ -42,7 +42,7 @@ interface GoldCalculation {
             </div>
             <button class="calculate-button" type="submit" aria-describedby="calculator-note">{{ lang.t('calculate') }}</button>
           </form>
-          <p id="calculator-error" class="validation-message text-cocoa" role="alert" aria-atomic="true">{{ error }}</p>
+          <p id="calculator-error" class="validation-message text-accent" role="alert" aria-atomic="true">{{ error }}</p>
           <p id="calculator-note" class="control-note text-muted">{{ lang.t('estimateBeforeDate') }} <time [attr.datetime]="goldPrices.sampleDate">{{ lang.date(goldPrices.sampleDate) }}</time>{{ lang.t('estimateAfterDate') }}</p>
         </div>
         <div class="calculator-result bg-secondary" aria-labelledby="result-title" role="status" aria-live="polite" aria-atomic="true">

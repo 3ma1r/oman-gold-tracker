@@ -8,7 +8,7 @@ import { LanguageService } from '../services/language.service';
   template: `
     <section id="history" class="panel bg-card" aria-labelledby="history-title">
       <div class="section-heading">
-        <svg class="section-icon text-cocoa" viewBox="0 0 32 36" fill="none" aria-hidden="true">
+        <svg class="section-icon text-accent" viewBox="0 0 32 36" fill="none" aria-hidden="true">
           <rect x="3" y="6" width="26" height="27" rx="3" stroke="currentColor" stroke-width="2.2" />
           <path d="M10 2v8m12-8v8M3 15h26M10 21h1m9 0h1m-11 6h1m9 0h1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
         </svg>

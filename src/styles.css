@@ -26,6 +26,7 @@
   --color-muted: var(--secondary-text);
   --color-border: var(--theme-border);
   --color-gold: var(--gold-accent);
+  --color-accent: var(--interactive-accent);
 }
 
 @layer base {
@@ -34,9 +35,26 @@
     --card-surface: #FFFCF8;
     --secondary-surface: #EAE2D8;
     --primary-text: #3B332D;
-    --secondary-text: #7A6657;
+    --secondary-text: #705D4F;
     --theme-border: #EAE2D8;
     --gold-accent: #B99965;
+    /* Supporting colours use the same palette for controls and non-surface text. */
+    --interactive-accent: var(--color-cocoa);
+    --control-border: var(--color-cocoa);
+    --focus-ring: var(--color-cocoa);
+    --action-background: var(--color-cocoa);
+    --action-text: #FFFCF8;
+    --action-hover: var(--color-espresso);
+    --chart-fill: var(--color-oatmeal);
+    --chart-fill-opacity: .55;
+    --hero-text: #FFFCF8;
+    --hero-start: var(--color-taupe);
+    --hero-middle: var(--color-cocoa);
+    --hero-end: var(--color-espresso);
+    --hero-shade: color-mix(in srgb, var(--color-espresso) 45%, transparent);
+    --hero-highlight: color-mix(in srgb, var(--gold-accent) 40%, transparent);
+    color-scheme: light;
+    background-color: var(--page-background);
   }
 
   .dark {
@@ -47,6 +65,21 @@
     --secondary-text: #C7B8A7;
     --theme-border: #51463B;
     --gold-accent: #C4A578;
+    --interactive-accent: var(--gold-accent);
+    --control-border: var(--color-taupe);
+    --focus-ring: var(--gold-accent);
+    --action-background: var(--gold-accent);
+    --action-text: var(--page-background);
+    --action-hover: var(--secondary-text);
+    --chart-fill: var(--gold-accent);
+    --chart-fill-opacity: .14;
+    --hero-text: var(--primary-text);
+    --hero-start: var(--theme-border);
+    --hero-middle: var(--secondary-surface);
+    --hero-end: var(--page-background);
+    --hero-shade: transparent;
+    --hero-highlight: color-mix(in srgb, var(--gold-accent) 12%, transparent);
+    color-scheme: dark;
   }
 
   body {
@@ -64,13 +97,13 @@
   button, select { cursor: pointer; }
   svg { display: block; flex-shrink: 0; }
   :focus-visible {
-    outline: 3px solid var(--color-cocoa);
+    outline: 3px solid var(--focus-ring);
     outline-offset: 4px;
   }
 }
 
 /* Shared page layout keeps the eight section components deliberately simple. */
-:root { --anchor-offset: 112px; }
+:root { --anchor-offset: 128px; }
 section[id], main[id] { scroll-margin-top: var(--anchor-offset); }
 app-header, app-hero, app-todays-prices, app-price-card,
 app-gold-calculator, app-price-trend, app-price-history, app-footer { display: block; min-width: 0; }
@@ -103,22 +136,28 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 .brand-caption { display: block; font-size: .7rem; margin-block-start: 4px; }
 .header-nav { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; justify-content: center; min-width: 0; }
 .header-nav a { padding-block: 6px; font-size: .94rem; font-weight: 550; border-block-end: 2px solid transparent; }
-.header-nav a:hover { color: var(--color-cocoa); border-block-end-color: var(--gold-accent); }
-.language-button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--color-taupe); border-radius: 9px; font-size: .85rem; }
-.language-button:hover { background: var(--secondary-surface); }
+.header-nav a:hover { color: var(--interactive-accent); border-block-end-color: var(--gold-accent); }
+.header-controls { display: flex; align-items: center; gap: 8px; }
+.language-button, .theme-button { min-height: 44px; border: 1px solid var(--control-border); border-radius: 9px; font-size: .85rem; }
+.language-button { padding: 8px 14px; }
+.theme-button { display: grid; place-items: center; min-width: 44px; padding: 9px; }
+.theme-button svg { width: 22px; height: 22px; }
+.language-button:hover:not(:disabled), .theme-button:hover:not(:disabled) { background: var(--secondary-surface); }
 
 /* Warm gradient is a placeholder for the approved hero photograph. */
 .hero {
-  color: var(--color-oatmeal);
+  color: var(--hero-text);
   background:
-    radial-gradient(ellipse at 10% 95%, color-mix(in srgb, var(--color-gold) 40%, transparent), transparent 56%),
-    linear-gradient(110deg, var(--color-taupe) 0%, var(--color-cocoa) 38%, var(--color-espresso) 78%);
+    linear-gradient(var(--hero-shade), var(--hero-shade)),
+    radial-gradient(ellipse at 10% 95%, var(--hero-highlight), transparent 56%),
+    linear-gradient(110deg, var(--hero-start) 0%, var(--hero-middle) 38%, var(--hero-end) 78%);
 }
+.hero :focus-visible { outline-color: var(--hero-text); }
 .hero-inner { padding-block: 20px 22px; }
 .breadcrumb ol { display: flex; flex-wrap: wrap; gap: 10px; padding: 0; margin: 0; list-style: none; font-size: .8rem; }
 .breadcrumb a:hover { text-decoration: underline; }
 .hero-copy { max-width: 740px; padding-block: 22px 18px; }
-.hero h1 { color: var(--card-surface); font-size: clamp(2rem, 4vw, 3.35rem); font-weight: 750; line-height: 1.4; }
+.hero h1 { color: var(--hero-text); font-size: clamp(2rem, 4vw, 3.35rem); font-weight: 750; line-height: 1.4; }
 .hero-copy p { max-width: 650px; font-size: 1.15rem; line-height: 1.85; margin-block: 10px 16px; }
 .sample-badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 14px; font-size: .8rem; font-weight: 600; }
 .sample-badge svg { width: 17px; height: 17px; }
@@ -127,11 +166,11 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
   max-width: 680px; margin-inline-start: auto; padding: 14px 8px;
   border: 1px solid color-mix(in srgb, var(--color-oatmeal) 38%, transparent);
   border-radius: 12px; background: color-mix(in srgb, var(--color-espresso) 34%, transparent);
-  color: var(--card-surface);
+  color: var(--hero-text);
 }
 .hero-details > div { padding-inline: 14px; text-align: center; }
 .hero-details > div + div { border-inline-start: 1px solid color-mix(in srgb, var(--color-oatmeal) 30%, transparent); }
-.hero-details dt { font-size: .75rem; opacity: .85; margin-block-end: 4px; }
+.hero-details dt { font-size: .75rem; margin-block-end: 4px; }
 .hero-details dd { font-size: .88rem; }
 
 /* Today's price cards */
@@ -148,13 +187,13 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 .calculator-fields { margin-block-start: 30px; align-items: end; }
 .field-group { display: grid; gap: 6px; min-width: 0; }
 .field-group label { font-size: .92rem; font-weight: 600; }
-.field { width: 100%; min-height: 48px; padding: 8px 14px; border: 1px solid var(--color-taupe); border-radius: 9px; }
-.field::placeholder { color: var(--secondary-text); opacity: .75; }
-.calculate-button { min-height: 48px; min-width: 106px; padding: 8px 22px; border: 0; border-radius: 9px; background: var(--color-cocoa); color: var(--card-surface); }
-.calculate-button:hover { background: var(--color-espresso); }
+.field { width: 100%; min-height: 48px; padding: 8px 14px; border: 1px solid var(--control-border); border-radius: 9px; }
+.field::placeholder { color: var(--secondary-text); opacity: 1; }
+.calculate-button { min-height: 48px; min-width: 106px; padding: 8px 22px; border: 0; border-radius: 9px; background: var(--action-background); color: var(--action-text); }
+.calculate-button:hover:not(:disabled) { background: var(--action-hover); }
 .validation-message { font-size: .85rem; font-weight: 600; }
 .validation-message:not(:empty) { margin-block-start: 10px; }
-.field[aria-invalid="true"] { border-color: var(--color-cocoa); box-shadow: inset 0 0 0 1px var(--color-cocoa); }
+.field[aria-invalid="true"] { border-color: var(--interactive-accent); box-shadow: inset 0 0 0 1px var(--interactive-accent); }
 .control-note { margin-block-start: 10px; font-size: .75rem; }
 .calculator-result { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 216px; padding: 20px; border-radius: 11px; }
 .result-icon { width: 40px; height: 40px; margin-block-end: 7px; }
@@ -169,7 +208,12 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 /* Trend controls, sample comparison and native SVG chart */
 .purity-tabs { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; border: 0; padding: 0; margin: 20px 0 0; }
 .purity-tab { flex: 1; min-width: 76px; min-height: 44px; padding: 9px 8px; border: 0; text-align: center; font-size: .87rem; border-radius: 8px; color: var(--primary-text); background: color-mix(in srgb, var(--secondary-surface) 60%, var(--card-surface)); }
-.purity-tab[aria-pressed="true"] { background: var(--color-cocoa); color: var(--card-surface); }
+.purity-tab:hover:not(:disabled) { box-shadow: inset 0 0 0 1px var(--control-border); }
+.purity-tab[aria-pressed="true"] { background: var(--action-background); color: var(--action-text); }
+.calculate-button:disabled, .purity-tab:disabled, .language-button:disabled, .theme-button:disabled, .field:disabled {
+  background: var(--secondary-surface); color: var(--secondary-text); border: 1px solid var(--control-border);
+  opacity: 1; cursor: not-allowed;
+}
 .trend-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; text-align: center; }
 .trend-stats > div { padding-inline: 12px; }
 .trend-stats > div + div { border-inline-start: 1px solid var(--theme-border); }
@@ -190,9 +234,9 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 .chart-y-axis span { position: absolute; right: 0; transform: translateY(-50%); }
 .price-chart { width: 100%; height: 240px; min-width: 0; }
 .chart-grid { stroke: var(--theme-border); stroke-width: 1; opacity: .7; }
-.chart-line { fill: none; stroke: var(--color-cocoa); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-.chart-area { fill: var(--color-oatmeal); opacity: .55; }
-.chart-point { fill: var(--color-cocoa); stroke: var(--color-cocoa); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.chart-line { fill: none; stroke: var(--interactive-accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.chart-area { fill: var(--chart-fill); opacity: var(--chart-fill-opacity); }
+.chart-point { fill: var(--interactive-accent); stroke: var(--interactive-accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
 .chart-dates { grid-column: 2; display: flex; justify-content: space-between; gap: 16px; font-size: .75rem; }
 .chart-dates > span { unicode-bidi: isolate; max-width: 50%; text-align: left; }
 .chart-dates > span:last-child { text-align: right; }
@@ -225,7 +269,7 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
   .page-shell { width: calc(100% - 32px); }
   .header-inner { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding-block: 12px; }
   .header-nav { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; }
-  .language-button { grid-column: 2; grid-row: 1; }
+  .header-controls { grid-column: 2; grid-row: 1; }
   .brand-mark { width: 48px; height: 37px; }
   .brand-name { font-size: 1.18rem; }
   .header-nav { gap: 4px 20px; }
@@ -256,4 +300,12 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
   .chart-y-axis, .chart-dates { font-size: .7rem; }
   .price-chart { height: 210px; }
   .footer-inner { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+
+@media (max-width: 479px) {
+  :root { --anchor-offset: 216px; }
+  /* Give the bilingual brand its own row; navigation wraps beside the controls. */
+  .brand { grid-column: 1 / -1; }
+  .header-nav { grid-column: 1; grid-row: 2; }
+  .header-controls { grid-column: 2; grid-row: 2; }
 }

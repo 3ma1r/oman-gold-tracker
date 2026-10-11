@@ -12,7 +12,7 @@ import { buildPriceTrend, CHART_HEIGHT, CHART_WIDTH } from './price-trend-chart'
       <div class="trend-top grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           <div class="section-heading">
-            <svg class="section-icon text-cocoa" viewBox="0 0 32 36" fill="none" aria-hidden="true">
+            <svg class="section-icon text-accent" viewBox="0 0 32 36" fill="none" aria-hidden="true">
               <path d="M5 31v-7m8 7V17m8 14V10m8 21V3" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
             </svg>
             <div>
