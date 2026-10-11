@@ -98,10 +98,10 @@ describe('GoldPriceService', () => {
   });
 
   it('formats calendar parts directly, including month boundaries and leap days', () => {
-    expect(formatSampleDate('2025-03-29')).toBe('29 مارس 2025');
-    expect(formatSampleDate('2025-04-01')).toBe('1 أبريل 2025');
-    expect(formatSampleDate(service.sampleDate)).toBe('27 أبريل 2025');
-    expect(formatSampleDate('2024-02-29')).toBe('29 فبراير 2024');
-    expect(formatSampleDate('2025-12-31')).toBe('31 ديسمبر 2025');
+    expect(formatSampleDate('2025-03-29')).toBe('٢٩ مارس ٢٠٢٥');
+    expect(formatSampleDate('2025-04-01')).toBe('١ أبريل ٢٠٢٥');
+    expect(formatSampleDate(service.sampleDate)).toBe('٢٧ أبريل ٢٠٢٥');
+    expect(formatSampleDate('2024-02-29')).toBe('٢٩ فبراير ٢٠٢٤');
+    expect(formatSampleDate('2025-12-31')).toBe('٣١ ديسمبر ٢٠٢٥');
   });
 });

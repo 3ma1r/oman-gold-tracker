@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { App } from './app';
 import { GoldPriceService } from './services/gold-price.service';
-import { formatSampleDate } from './services/gold-price-format';
+import { formatNumber, formatPrice, formatSampleDate } from './services/gold-price-format';
 
 describe('App', () => {
   beforeEach(async () => {
+    spyOn(Storage.prototype, 'getItem').and.returnValue(null);
     await TestBed.configureTestingModule({
       imports: [App],
     }).compileComponents();
@@ -30,7 +31,7 @@ describe('App', () => {
       const cells = row.querySelectorAll('td');
       [24, 22, 21, 18].forEach((purity, column) => {
         const value = service.history[index].prices[purity as 18 | 21 | 22 | 24];
-        expect(cells[column].textContent?.trim()).toBe(value.toFixed(3));
+        expect(cells[column].textContent?.trim()).toBe(formatPrice(value));
       });
     });
     expect(compiled.querySelector('#history')?.textContent).toContain('البيانات التجريبية');
@@ -46,8 +47,8 @@ describe('App', () => {
     const displayedPurities = [24, 22, 21, 18] as const;
 
     displayedPurities.forEach((purity, index) => {
-      const expected = service.latest.prices[purity].toFixed(3);
-      expect(cards[index].querySelector('h3')?.textContent).toContain(String(purity));
+      const expected = formatPrice(service.latest.prices[purity]);
+      expect(cards[index].querySelector('h3')?.textContent).toContain(formatNumber(purity));
       expect(cards[index].querySelector('.price-value')?.textContent?.trim()).toBe(expected);
       expect(newestCells[index].textContent?.trim()).toBe(expected);
     });

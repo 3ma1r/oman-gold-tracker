@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { PriceCard } from './price-card';
 import { GoldPriceService } from '../services/gold-price.service';
-import { formatSampleDate } from '../services/gold-price-format';
+import { LanguageService } from '../services/language.service';
 
 @Component({
   selector: 'app-todays-prices',
@@ -9,8 +9,8 @@ import { formatSampleDate } from '../services/gold-price-format';
   imports: [PriceCard],
   template: `
     <section id="prices" aria-labelledby="prices-title">
-      <h2 id="prices-title" class="sr-only">أسعار الذهب التجريبية</h2>
-      <p class="price-data-note text-muted">أسعار تجريبية بتاريخ <time [attr.datetime]="goldPrices.sampleDate">{{ sampleDateLabel }}</time> — ليست أسعار السوق الحالية.</p>
+      <h2 id="prices-title" class="sr-only">{{ lang.t('samplePrices') }}</h2>
+      <p class="price-data-note text-muted">{{ lang.t('samplePricesBeforeDate') }} <time [attr.datetime]="goldPrices.sampleDate">{{ lang.date(goldPrices.sampleDate) }}</time> {{ lang.t('samplePricesAfterDate') }}</p>
       <div class="price-grid grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-4 gap-4">
         <app-price-card [purity]="24" [price]="goldPrices.latest.prices[24]" />
         <app-price-card [purity]="22" [price]="goldPrices.latest.prices[22]" />
@@ -22,5 +22,5 @@ import { formatSampleDate } from '../services/gold-price-format';
 })
 export class TodaysPrices {
   protected readonly goldPrices = inject(GoldPriceService);
-  protected readonly sampleDateLabel = formatSampleDate(this.goldPrices.sampleDate);
+  protected readonly lang = inject(LanguageService);
 }

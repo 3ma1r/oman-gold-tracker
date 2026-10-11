@@ -4,6 +4,7 @@ import { buildPriceTrend, CHART_HEIGHT, CHART_WIDTH } from './price-trend-chart'
 import { GoldPriceService } from '../services/gold-price.service';
 import { SAMPLE_GOLD_PRICES } from '../data/sample-gold-prices';
 import { DailyGoldPrice, DateOnly, GOLD_PURITIES } from '../models/gold-price';
+import { formatNumber, formatPercentage, formatPrice, formatSampleDate } from '../services/gold-price-format';
 
 // Edge-case fixtures only; the application always reads the shared sample dataset.
 function seriesWith(values: readonly number[]): DailyGoldPrice[] {
@@ -120,6 +121,7 @@ describe('Price trend geometry and comparisons', () => {
 
 describe('PriceTrend', () => {
   beforeEach(async () => {
+    spyOn(Storage.prototype, 'getItem').and.returnValue(null);
     await TestBed.configureTestingModule({ imports: [PriceTrend] }).compileComponents();
   });
 
@@ -137,7 +139,7 @@ describe('PriceTrend', () => {
     expect(component.selectedPurity()).toBe(24);
     expect(element.querySelectorAll('.purity-tab').length).toBe(4);
     expect(element.querySelectorAll('button[aria-pressed="true"]').length).toBe(1);
-    expect(element.querySelector('button[aria-pressed="true"]')?.textContent).toContain('24');
+    expect(element.querySelector('button[aria-pressed="true"]')?.textContent).toContain(formatNumber(24));
   });
 
   for (const purity of GOLD_PURITIES) {
@@ -148,18 +150,18 @@ describe('PriceTrend', () => {
       const values = SAMPLE_GOLD_PRICES.map(day => day.prices[purity]);
       const stats = element.querySelectorAll('.trend-stats dd');
       expect(component.selectedPurity()).toBe(purity);
-      expect(stats[0].textContent?.trim()).toBe(values[29].toFixed(3));
-      expect(stats[1].textContent?.trim()).toBe(Math.max(...values).toFixed(3));
-      expect(stats[2].textContent?.trim()).toBe(Math.min(...values).toFixed(3));
+      expect(stats[0].textContent?.trim()).toBe(formatPrice(values[29]));
+      expect(stats[1].textContent?.trim()).toBe(formatPrice(Math.max(...values)));
+      expect(stats[2].textContent?.trim()).toBe(formatPrice(Math.min(...values)));
       expect(element.querySelector('polyline')?.getAttribute('points')).toBe(component.trend().line);
       expect(element.querySelector('button[aria-pressed="true"]')?.getAttribute('data-purity')).toBe(String(purity));
       expect(element.querySelectorAll('button[aria-pressed="true"]').length).toBe(1);
       expect(element.querySelector('.comparison-change')?.textContent).toContain('↑ ارتفاع');
       expect(element.querySelector('.comparison-change')?.textContent).toContain('+');
-      expect(element.querySelector('.comparison-percentage')?.textContent).toContain('%');
+      expect(element.querySelector('.comparison-percentage')?.textContent).toContain('٪');
       const comparison = element.querySelectorAll('.comparison-grid dd');
-      expect(comparison[0].textContent).toContain(values[29].toFixed(3));
-      expect(comparison[1].textContent).toContain(values[28].toFixed(3));
+      expect(comparison[0].textContent).toContain(formatPrice(values[29]));
+      expect(comparison[1].textContent).toContain(formatPrice(values[28]));
     });
   }
 
@@ -168,9 +170,9 @@ describe('PriceTrend', () => {
     const svg = element.querySelector('.price-chart')!;
     expect(svg.getAttribute('role')).toBe('img');
     expect(svg.getAttribute('aria-labelledby')).toBe('trend-chart-title trend-chart-description');
-    expect(svg.querySelector('title')?.textContent).toContain('24 قيراط');
-    expect(svg.querySelector('desc')?.textContent).toContain('29 مارس 2025');
-    expect(svg.querySelector('desc')?.textContent).toContain('27 أبريل 2025');
+    expect(svg.querySelector('title')?.textContent).toContain(`${formatNumber(24)} قيراط`);
+    expect(svg.querySelector('desc')?.textContent).toContain(formatSampleDate('2025-03-29'));
+    expect(svg.querySelector('desc')?.textContent).toContain(formatSampleDate('2025-04-27'));
     expect(svg.querySelector('desc')?.textContent).toContain('من اليسار إلى اليمين');
     expect(element.querySelector('.chart-layout')?.getAttribute('dir')).toBe('ltr');
     const endpoints = element.querySelectorAll<HTMLTimeElement>('.chart-dates time');
@@ -183,14 +185,14 @@ describe('PriceTrend', () => {
   it('shows Arabic downward text and signed amounts without relying on colour', () => {
     const { element } = render(seriesWith([12, 9]));
     expect(element.querySelector('.comparison-change')?.textContent).toContain('↓ انخفاض');
-    expect(element.querySelector('.comparison-change')?.textContent).toContain('−3.000');
-    expect(element.querySelector('.comparison-percentage')?.textContent).toContain('−25.00%');
+    expect(element.querySelector('.comparison-change')?.textContent).toContain(`−${formatPrice(3)}`);
+    expect(element.querySelector('.comparison-percentage')?.textContent).toContain(`−${formatPercentage(25)}`);
   });
 
   it('shows unchanged movement explicitly', () => {
     const { element } = render(seriesWith([12, 12]));
     expect(element.querySelector('.comparison-change')?.textContent).toContain('↔ دون تغيير');
-    expect(element.querySelector('.comparison-percentage')?.textContent).toContain('0.00%');
+    expect(element.querySelector('.comparison-percentage')?.textContent).toContain(formatPercentage(0));
   });
 
   it('explains an unavailable percentage when the previous price is zero', () => {

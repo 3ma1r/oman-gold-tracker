@@ -1,8 +1,7 @@
 import { Component, inject } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
 import { GoldPurity } from '../models/gold-price';
 import { GoldPriceService } from '../services/gold-price.service';
-import { formatSampleDate } from '../services/gold-price-format';
+import { LanguageService } from '../services/language.service';
 
 interface GoldCalculation {
   readonly purity: GoldPurity;
@@ -14,7 +13,6 @@ interface GoldCalculation {
 @Component({
   selector: 'app-gold-calculator',
   standalone: true,
-  imports: [DecimalPipe],
   template: `
     <section id="calculator" class="panel bg-card" aria-labelledby="calculator-title">
       <div class="calculator-layout grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-8">
@@ -25,27 +23,27 @@ interface GoldCalculation {
               <path d="M10 8h12v6H10zM10 20h2m4 0h2m4 0h0M10 26h2m4 0h2m4 0h0" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
             </svg>
             <div>
-              <h2 id="calculator-title">حاسبة الذهب</h2>
-              <p class="text-muted">احسب قيمة الذهب بناءً على العيار والوزن.</p>
+              <h2 id="calculator-title">{{ lang.t('calculator') }}</h2>
+              <p class="text-muted">{{ lang.t('calculatorDescription') }}</p>
             </div>
           </div>
           <form class="calculator-fields grid grid-cols-1 sm:grid-cols-[1.2fr_1fr_auto] gap-4" novalidate (submit)="calculate($event, weightField)">
             <div class="field-group">
-              <label for="gold-purity">عيار الذهب</label>
+              <label for="gold-purity">{{ lang.t('purityLabel') }}</label>
               <select #purityField id="gold-purity" name="gold-purity" class="field bg-card text-primary" (change)="changePurity(purityField.value)">
                 @for (purity of purities; track purity) {
-                  <option [value]="purity" [selected]="purity === selectedPurity">{{ purity }} قيراط</option>
+                  <option [value]="purity" [selected]="purity === selectedPurity">{{ lang.purity(purity) }}</option>
                 }
               </select>
             </div>
             <div class="field-group">
-              <label for="gold-weight">الوزن (غرام)</label>
-              <input #weightField id="gold-weight" name="gold-weight" class="field bg-card text-primary" type="number" inputmode="decimal" min="0" step="any" required placeholder="أدخل الوزن" aria-describedby="calculator-note calculator-error" [attr.aria-invalid]="error ? 'true' : null" (input)="clearResult()" />
+              <label for="gold-weight">{{ lang.t('weightLabel') }}</label>
+              <input #weightField id="gold-weight" name="gold-weight" class="field bg-card text-primary" type="number" inputmode="decimal" min="0" step="any" required [placeholder]="lang.t('weightPlaceholder')" aria-describedby="calculator-note calculator-error" [attr.aria-invalid]="error ? 'true' : null" (input)="clearResult()" />
             </div>
-            <button class="calculate-button" type="submit" aria-describedby="calculator-note">احسب</button>
+            <button class="calculate-button" type="submit" aria-describedby="calculator-note">{{ lang.t('calculate') }}</button>
           </form>
           <p id="calculator-error" class="validation-message text-cocoa" role="alert" aria-atomic="true">{{ error }}</p>
-          <p id="calculator-note" class="control-note text-muted">تقدير بأسعار تجريبية بتاريخ <time [attr.datetime]="goldPrices.sampleDate">{{ sampleDateLabel }}</time>، ولا يشمل المصنعية أو الرسوم الأخرى.</p>
+          <p id="calculator-note" class="control-note text-muted">{{ lang.t('estimateBeforeDate') }} <time [attr.datetime]="goldPrices.sampleDate">{{ lang.date(goldPrices.sampleDate) }}</time>{{ lang.t('estimateAfterDate') }}</p>
         </div>
         <div class="calculator-result bg-secondary" aria-labelledby="result-title" role="status" aria-live="polite" aria-atomic="true">
           <svg class="result-icon text-gold" viewBox="0 0 40 40" fill="none" aria-hidden="true">
@@ -54,19 +52,19 @@ interface GoldCalculation {
             <ellipse cx="13" cy="25" rx="10" ry="4" stroke="currentColor" stroke-width="1.5" />
             <path d="M3 25v9c0 5 20 5 20 0v-9M3 30c0 5 20 5 20 0" stroke="currentColor" stroke-width="1.5" />
           </svg>
-          <h3 id="result-title">قيمة الذهب</h3>
+          <h3 id="result-title">{{ lang.t('goldValue') }}</h3>
           <div class="result-divider"></div>
           @if (result; as calculation) {
-            <p class="result-value"><bdi>{{ calculation.total | number:'1.3-3':'en-US' }}</bdi></p>
+            <p class="result-value"><bdi>{{ lang.price(calculation.total) }}</bdi></p>
           } @else {
-            <p class="result-value" aria-label="لم تُحسب القيمة بعد">—</p>
+            <p class="result-value" [attr.aria-label]="lang.t('calculationEmpty')">—</p>
           }
-          <p class="text-muted">ريال عُماني</p>
+          <p class="text-muted">{{ lang.t('rial') }}</p>
           @if (result; as calculation) {
             <dl class="calculation-details text-muted">
-              <div><dt>العيار</dt><dd>{{ calculation.purity }} قيراط</dd></div>
-              <div><dt>الوزن</dt><dd><bdi>{{ calculation.weight }}</bdi> غرام</dd></div>
-              <div><dt>سعر الغرام</dt><dd><bdi>{{ calculation.pricePerGram | number:'1.3-3':'en-US' }}</bdi> ريال عُماني</dd></div>
+              <div><dt>{{ lang.t('purity') }}</dt><dd>{{ lang.purity(calculation.purity) }}</dd></div>
+              <div><dt>{{ lang.t('weight') }}</dt><dd><bdi>{{ lang.number(calculation.weight) }}</bdi> {{ lang.t('grams') }}</dd></div>
+              <div><dt>{{ lang.t('gramPrice') }}</dt><dd><bdi>{{ lang.currency(calculation.pricePerGram) }}</bdi></dd></div>
             </dl>
           }
         </div>
@@ -76,11 +74,13 @@ interface GoldCalculation {
 })
 export class GoldCalculator {
   protected readonly goldPrices = inject(GoldPriceService);
+  protected readonly lang = inject(LanguageService);
   readonly purities = this.goldPrices.purities;
-  readonly sampleDateLabel = formatSampleDate(this.goldPrices.sampleDate);
   selectedPurity: GoldPurity = 24;
   result: GoldCalculation | null = null;
-  error = '';
+  private errorKey: 'invalidWeight' | 'overflowingTotal' | null = null;
+
+  get error(): string { return this.errorKey ? this.lang.t(this.errorKey) : ''; }
 
   changePurity(value: string): void {
     const purity = this.purities.find(purity => String(purity) === value);
@@ -92,7 +92,7 @@ export class GoldCalculator {
 
   clearResult(): void {
     this.result = null;
-    this.error = '';
+    this.errorKey = null;
   }
 
   calculate(event: Event, weightField: HTMLInputElement): void {
@@ -101,14 +101,14 @@ export class GoldCalculator {
     const weight = weightField.valueAsNumber;
 
     if (!Number.isFinite(weight) || weight <= 0) {
-      this.error = 'أدخل وزناً صالحاً أكبر من صفر بالغرام.';
+      this.errorKey = 'invalidWeight';
       return;
     }
 
     const pricePerGram = this.goldPrices.latest.prices[this.selectedPurity];
     const total = weight * pricePerGram;
     if (!Number.isFinite(total)) {
-      this.error = 'القيمة الناتجة كبيرة جداً. أدخل وزناً أصغر لإجراء الحساب.';
+      this.errorKey = 'overflowingTotal';
       return;
     }
 

@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { LanguageService } from './services/language.service';
 import { Header } from './components/header';
 import { Hero } from './components/hero';
 import { TodaysPrices } from './components/todays-prices';
@@ -13,4 +14,6 @@ import { Footer } from './components/footer';
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App {}
+export class App {
+  protected readonly lang = inject(LanguageService);
+}

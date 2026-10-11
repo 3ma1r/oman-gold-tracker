@@ -96,14 +96,16 @@ app-gold-calculator, app-price-trend, app-price-history, app-footer { display: b
 /* Header */
 app-header { position: sticky; top: 0; z-index: 50; }
 app-header header { border-block-end: 1px solid var(--theme-border); }
-.header-inner { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding-block: 14px; }
-.brand { display: flex; align-items: center; gap: 12px; flex-shrink: 0; border-radius: 4px; }
+.header-inner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 24px; padding-block: 14px; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; border-radius: 4px; }
 .brand-mark { width: 58px; height: 44px; }
 .brand-name { display: block; font-size: 1.4rem; font-weight: 750; line-height: 1.4; }
 .brand-caption { display: block; font-size: .7rem; margin-block-start: 4px; }
-.header-nav { display: flex; flex-wrap: wrap; gap: 8px 30px; align-items: center; }
+.header-nav { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; justify-content: center; min-width: 0; }
 .header-nav a { padding-block: 6px; font-size: .94rem; font-weight: 550; border-block-end: 2px solid transparent; }
 .header-nav a:hover { color: var(--color-cocoa); border-block-end-color: var(--gold-accent); }
+.language-button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--color-taupe); border-radius: 9px; font-size: .85rem; }
+.language-button:hover { background: var(--secondary-surface); }
 
 /* Warm gradient is a placeholder for the approved hero photograph. */
 .hero {
@@ -192,7 +194,7 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 .chart-area { fill: var(--color-oatmeal); opacity: .55; }
 .chart-point { fill: var(--color-cocoa); stroke: var(--color-cocoa); stroke-width: 2; vector-effect: non-scaling-stroke; }
 .chart-dates { grid-column: 2; display: flex; justify-content: space-between; gap: 16px; font-size: .75rem; }
-.chart-dates > span { direction: rtl; unicode-bidi: isolate; max-width: 50%; text-align: left; }
+.chart-dates > span { unicode-bidi: isolate; max-width: 50%; text-align: left; }
 .chart-dates > span:last-child { text-align: right; }
 .chart-dates time { display: block; }
 .history-alternative { text-decoration: underline; text-underline-offset: 3px; }
@@ -221,8 +223,9 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 @media (max-width: 767px) {
   :root { --anchor-offset: 192px; }
   .page-shell { width: calc(100% - 32px); }
-  .header-inner { flex-direction: column; align-items: stretch; gap: 10px; padding-block: 12px; }
-  .brand { align-self: flex-start; }
+  .header-inner { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding-block: 12px; }
+  .header-nav { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; }
+  .language-button { grid-column: 2; grid-row: 1; }
   .brand-mark { width: 48px; height: 37px; }
   .brand-name { font-size: 1.18rem; }
   .header-nav { gap: 4px 20px; }

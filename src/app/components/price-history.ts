@@ -1,12 +1,10 @@
 import { Component, inject } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
 import { GoldPriceService } from '../services/gold-price.service';
-import { formatSampleDate } from '../services/gold-price-format';
+import { LanguageService } from '../services/language.service';
 
 @Component({
   selector: 'app-price-history',
   standalone: true,
-  imports: [DecimalPipe],
   template: `
     <section id="history" class="panel bg-card" aria-labelledby="history-title">
       <div class="section-heading">
@@ -15,31 +13,31 @@ import { formatSampleDate } from '../services/gold-price-format';
           <path d="M10 2v8m12-8v8M3 15h26M10 21h1m9 0h1m-11 6h1m9 0h1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
         </svg>
         <div>
-          <h2 id="history-title">سجل الأسعار</h2>
-          <p class="text-muted">سجل من 30 يوماً من البيانات التجريبية، بالريال العُماني لكل غرام. ليست أسعار السوق الحالية.</p>
+          <h2 id="history-title">{{ lang.t('history') }}</h2>
+          <p class="text-muted">{{ lang.t('historyDescription', { count: lang.number(goldPrices.history.length) }) }}</p>
         </div>
       </div>
-      <div class="history-scroll" tabindex="0" role="region" aria-label="جدول سجل الأسعار — قابل للتمرير أفقياً">
+      <div class="history-scroll" tabindex="0" role="region" [attr.aria-label]="lang.t('historyRegion')">
         <table>
-          <caption class="sr-only">تاريخ أسعار الذهب وعيارات 24 و22 و21 و18 قيراط</caption>
+          <caption class="sr-only">{{ lang.t('historyCaption', { purities: historyPurities.map(formatPurity).join(' / ') }) }}</caption>
           <thead class="bg-secondary text-primary">
             <tr>
-              <th scope="col">التاريخ</th>
-              <th scope="col">ذهب 24 قيراط</th>
-              <th scope="col">ذهب 22 قيراط</th>
-              <th scope="col">ذهب 21 قيراط</th>
-              <th scope="col">ذهب 18 قيراط</th>
+              <th scope="col">{{ lang.t('date') }}</th>
+              @for (purity of historyPurities; track purity) {
+                <th scope="col">{{ lang.goldPurity(purity) }}</th>
+              }
             </tr>
           </thead>
           <tbody>
             @for (day of goldPrices.history; track day.date) {
               <tr>
-                <th scope="row"><time [attr.datetime]="day.date">{{ formatDate(day.date) }}</time></th>
-                <td><bdi>{{ day.prices[24] | number:'1.3-3':'en-US' }}</bdi></td>
-                <td><bdi>{{ day.prices[22] | number:'1.3-3':'en-US' }}</bdi></td>
-                <td><bdi>{{ day.prices[21] | number:'1.3-3':'en-US' }}</bdi></td>
-                <td><bdi>{{ day.prices[18] | number:'1.3-3':'en-US' }}</bdi></td>
+                <th scope="row"><time [attr.datetime]="day.date">{{ lang.date(day.date) }}</time></th>
+                @for (purity of historyPurities; track purity) {
+                  <td><bdi>{{ lang.price(day.prices[purity]) }}</bdi></td>
+                }
               </tr>
+            } @empty {
+              <tr><td colspan="5">{{ lang.t('historyEmpty') }}</td></tr>
             }
           </tbody>
         </table>
@@ -49,5 +47,7 @@ import { formatSampleDate } from '../services/gold-price-format';
 })
 export class PriceHistory {
   protected readonly goldPrices = inject(GoldPriceService);
-  protected readonly formatDate = formatSampleDate;
+  protected readonly lang = inject(LanguageService);
+  protected readonly historyPurities = [24, 22, 21, 18] as const;
+  protected readonly formatPurity = (purity: (typeof this.historyPurities)[number]) => this.lang.purity(purity);
 }

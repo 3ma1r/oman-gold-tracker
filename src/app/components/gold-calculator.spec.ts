@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GoldCalculator } from './gold-calculator';
 import { GoldPriceService } from '../services/gold-price.service';
+import { formatNumber, formatPrice } from '../services/gold-price-format';
 
 describe('GoldCalculator', () => {
   let fixture: ComponentFixture<GoldCalculator>;
@@ -12,6 +13,7 @@ describe('GoldCalculator', () => {
   let prices: GoldPriceService;
 
   beforeEach(async () => {
+    spyOn(Storage.prototype, 'getItem').and.returnValue(null);
     await TestBed.configureTestingModule({ imports: [GoldCalculator] }).compileComponents();
     fixture = TestBed.createComponent(GoldCalculator);
     component = fixture.componentInstance;
@@ -60,12 +62,12 @@ describe('GoldCalculator', () => {
       submit();
       const price = prices.latest.prices[karat];
       expect(component.result).toEqual({ purity: karat, weight: 2.5, pricePerGram: price, total: 2.5 * price });
-      const displayedTotals = { 18: '96.000', 21: '112.000', 22: '117.333', 24: '128.000' };
-      expect(element.querySelector('.result-value')?.textContent?.trim()).toBe(displayedTotals[karat]);
+      const displayedTotals = { 18: 96, 21: 112, 22: 117.333, 24: 128 };
+      expect(element.querySelector('.result-value')?.textContent?.trim()).toBe(formatPrice(displayedTotals[karat]));
       const details = element.querySelectorAll('.calculation-details dd');
-      expect(details[0].textContent).toContain(String(karat));
-      expect(details[1].textContent).toContain('2.5');
-      expect(details[2].textContent).toContain(price.toFixed(3));
+      expect(details[0].textContent).toContain(formatNumber(karat));
+      expect(details[1].textContent).toContain(formatNumber(2.5));
+      expect(details[2].textContent).toContain(formatPrice(price));
       expect(component.error).toBe('');
     });
   }
@@ -78,15 +80,15 @@ describe('GoldCalculator', () => {
     expect(component.result?.total).toBe(total);
     expect(component.result?.total).not.toBe(Number(total.toFixed(3)));
     expect(component.result?.weight).toBe(2.34567);
-    expect(element.querySelector('.result-value')?.textContent?.trim()).toBe(total.toFixed(3));
-    expect(element.querySelector('.calculation-details')?.textContent).toContain('2.34567');
+    expect(element.querySelector('.result-value')?.textContent?.trim()).toBe(formatPrice(total));
+    expect(element.querySelector('.calculation-details')?.textContent).toContain(formatNumber(2.34567));
   });
 
   it('accepts small positive weights with more than two decimal places', () => {
     enterWeight('0.00001');
     submit();
     expect(component.result?.total).toBe(0.00001 * prices.latest.prices[24]);
-    expect(element.querySelector('.result-value')?.textContent?.trim()).toBe('0.001');
+    expect(element.querySelector('.result-value')?.textContent?.trim()).toBe(formatPrice(0.001));
   });
 
   it('calculates through the native submit button', () => {
