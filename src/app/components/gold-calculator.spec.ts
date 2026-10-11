@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { GoldCalculator } from './gold-calculator';
-import { GoldPriceService } from '../services/gold-price.service';
+import { GoldPriceService, SAMPLE_LOADING_DELAY_MS } from '../services/gold-price.service';
 import { formatNumber, formatPrice } from '../services/gold-price-format';
 
 describe('GoldCalculator', () => {
@@ -15,6 +15,7 @@ describe('GoldCalculator', () => {
   beforeEach(async () => {
     spyOn(Storage.prototype, 'getItem').and.returnValue(null);
     await TestBed.configureTestingModule({ imports: [GoldCalculator] }).compileComponents();
+    fakeAsync(() => { TestBed.inject(GoldPriceService); tick(SAMPLE_LOADING_DELAY_MS); })();
     fixture = TestBed.createComponent(GoldCalculator);
     component = fixture.componentInstance;
     element = fixture.nativeElement;
@@ -60,7 +61,7 @@ describe('GoldCalculator', () => {
       enterWeight('2.5');
       expect(component.result).toBeNull();
       submit();
-      const price = prices.latest.prices[karat];
+      const price = prices.latest!.prices[karat];
       expect(component.result).toEqual({ purity: karat, weight: 2.5, pricePerGram: price, total: 2.5 * price });
       const displayedTotals = { 18: 96, 21: 112, 22: 117.333, 24: 128 };
       expect(element.querySelector('.result-value')?.textContent?.trim()).toBe(formatPrice(displayedTotals[karat]));
@@ -76,7 +77,7 @@ describe('GoldCalculator', () => {
     selectPurity(22);
     enterWeight('2.34567');
     submit();
-    const total = 2.34567 * prices.latest.prices[22];
+    const total = 2.34567 * prices.latest!.prices[22];
     expect(component.result?.total).toBe(total);
     expect(component.result?.total).not.toBe(Number(total.toFixed(3)));
     expect(component.result?.weight).toBe(2.34567);
@@ -87,7 +88,7 @@ describe('GoldCalculator', () => {
   it('accepts small positive weights with more than two decimal places', () => {
     enterWeight('0.00001');
     submit();
-    expect(component.result?.total).toBe(0.00001 * prices.latest.prices[24]);
+    expect(component.result?.total).toBe(0.00001 * prices.latest!.prices[24]);
     expect(element.querySelector('.result-value')?.textContent?.trim()).toBe(formatPrice(0.001));
   });
 
@@ -95,7 +96,7 @@ describe('GoldCalculator', () => {
     enterWeight('1');
     element.querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
     fixture.detectChanges();
-    expect(component.result?.total).toBe(prices.latest.prices[24]);
+    expect(component.result?.total).toBe(prices.latest!.prices[24]);
   });
 
   for (const invalid of ['', '0', '-2', 'abc', 'NaN', 'Infinity', '-Infinity', '1e309']) {
@@ -152,7 +153,7 @@ describe('GoldCalculator', () => {
     expect(element.querySelector('.result-value')?.textContent).toBe('—');
     expect(component.error).toBe('');
     submit();
-    expect(component.result?.pricePerGram).toBe(prices.latest.prices[18]);
+    expect(component.result?.pricePerGram).toBe(prices.latest!.prices[18]);
   });
 
   it('clears validation and invalid state when either input changes', () => {
@@ -174,7 +175,7 @@ describe('GoldCalculator', () => {
     const note = element.querySelector('#calculator-note')!;
     expect(note.textContent).toContain('أسعار تجريبية');
     expect(note.textContent).toContain('لا يشمل المصنعية أو الرسوم الأخرى');
-    expect(note.querySelector('time')?.dateTime).toBe(prices.sampleDate);
+    expect(note.querySelector('time')?.dateTime).toBe(prices.sampleDate!);
     expect(element.querySelector('.calculator-result')?.getAttribute('role')).toBe('status');
     expect(element.querySelector('.calculator-result')?.getAttribute('aria-live')).toBe('polite');
     expect(element.querySelector('label[for="gold-weight"]')).not.toBeNull();

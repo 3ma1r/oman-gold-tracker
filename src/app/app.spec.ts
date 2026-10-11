@@ -1,6 +1,6 @@
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { App } from './app';
-import { GoldPriceService } from './services/gold-price.service';
+import { GoldPriceService, SAMPLE_LOADING_DELAY_MS } from './services/gold-price.service';
 import { formatNumber, formatPrice, formatSampleDate } from './services/gold-price-format';
 
 describe('App', () => {
@@ -9,6 +9,7 @@ describe('App', () => {
     await TestBed.configureTestingModule({
       imports: [App],
     }).compileComponents();
+    fakeAsync(() => { TestBed.inject(GoldPriceService); tick(SAMPLE_LOADING_DELAY_MS); })();
   });
 
   it('should create the app', () => {
@@ -47,7 +48,7 @@ describe('App', () => {
     const displayedPurities = [24, 22, 21, 18] as const;
 
     displayedPurities.forEach((purity, index) => {
-      const expected = formatPrice(service.latest.prices[purity]);
+      const expected = formatPrice(service.latest!.prices[purity]);
       expect(cards[index].querySelector('h3')?.textContent).toContain(formatNumber(purity));
       expect(cards[index].querySelector('.price-value')?.textContent?.trim()).toBe(expected);
       expect(newestCells[index].textContent?.trim()).toBe(expected);
@@ -63,7 +64,7 @@ describe('App', () => {
     const pricesDate = compiled.querySelector<HTMLTimeElement>('#prices time');
 
     expect(heroDate?.dateTime).toBe(service.history[0].date);
-    expect(heroDate?.textContent).toBe(formatSampleDate(service.sampleDate));
+    expect(heroDate?.textContent).toBe(formatSampleDate(service.sampleDate!));
     expect(pricesDate?.dateTime).toBe(heroDate?.dateTime);
     expect(compiled.querySelector('.price-data-note')?.textContent).toContain('ليست أسعار السوق الحالية');
   });

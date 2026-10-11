@@ -1,5 +1,5 @@
-import { TestBed } from '@angular/core/testing';
-import { GoldPriceService } from './gold-price.service';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { GoldPriceService, SAMPLE_LOADING_DELAY_MS } from './gold-price.service';
 import { SAMPLE_FINAL_DATE, SAMPLE_GOLD_PRICES } from '../data/sample-gold-prices';
 import { formatSampleDate } from './gold-price-format';
 
@@ -36,8 +36,8 @@ describe('GoldPriceService', () => {
     expect(service.days).toBe(SAMPLE_GOLD_PRICES);
     expect(service.history.length).toBe(30);
     expect(service.latest).toBe(service.days[29]);
-    expect(service.history[0]).toBe(service.latest);
-    expect(service.sampleDate).toBe(service.latest.date);
+    expect(service.history[0]).toBe(service.latest!);
+    expect(service.sampleDate).toBe(service.latest!.date);
     expect(Object.isFrozen(service.days)).toBeTrue();
     expect(Object.isFrozen(service.history)).toBeTrue();
 
@@ -76,7 +76,7 @@ describe('GoldPriceService', () => {
   });
 
   it('has fixed final prices for all four purities', () => {
-    expect(service.latest.prices).toEqual({
+    expect(service.latest!.prices).toEqual({
       18: 38.400,
       21: 44.800,
       22: 46.933,
@@ -88,10 +88,10 @@ describe('GoldPriceService', () => {
     jasmine.clock().install();
     try {
       jasmine.clock().mockDate(new Date('2035-01-01T00:00:00Z'));
-      const anotherService = new GoldPriceService();
+      const anotherService = TestBed.runInInjectionContext(() => new GoldPriceService());
       expect(anotherService.days).toBe(service.days);
       expect(anotherService.sampleDate).toBe('2025-04-27');
-      expect(anotherService.latest.prices[24]).toBe(51.200);
+      expect(anotherService.latest!.prices[24]).toBe(51.200);
     } finally {
       jasmine.clock().uninstall();
     }
@@ -100,8 +100,37 @@ describe('GoldPriceService', () => {
   it('formats calendar parts directly, including month boundaries and leap days', () => {
     expect(formatSampleDate('2025-03-29')).toBe('٢٩ مارس ٢٠٢٥');
     expect(formatSampleDate('2025-04-01')).toBe('١ أبريل ٢٠٢٥');
-    expect(formatSampleDate(service.sampleDate)).toBe('٢٧ أبريل ٢٠٢٥');
+    expect(formatSampleDate(service.sampleDate!)).toBe('٢٧ أبريل ٢٠٢٥');
     expect(formatSampleDate('2024-02-29')).toBe('٢٩ فبراير ٢٠٢٤');
     expect(formatSampleDate('2025-12-31')).toBe('٣١ ديسمبر ٢٠٢٥');
   });
+});
+
+describe('GoldPriceService initial loading', () => {
+  it('becomes ready after exactly one short delay without changing the local records', fakeAsync(() => {
+    const timers = spyOn(window, 'setTimeout').and.callThrough();
+    const service = TestBed.inject(GoldPriceService);
+    const data = service.days;
+    const latest = service.latest;
+    expect(service.loading()).toBeTrue();
+    tick(SAMPLE_LOADING_DELAY_MS - 1);
+    expect(service.loading()).toBeTrue();
+    tick(1);
+    expect(service.loading()).toBeFalse();
+    expect(TestBed.inject(GoldPriceService)).toBe(service);
+    tick(SAMPLE_LOADING_DELAY_MS * 3);
+    expect(service.loading()).toBeFalse();
+    expect(service.days).toBe(data);
+    expect(service.latest).toBe(latest);
+    expect(timers.calls.allArgs().filter(args => args[1] === SAMPLE_LOADING_DELAY_MS).length).toBe(1);
+  }));
+
+  it('cancels a pending initial timer when its injector is destroyed', fakeAsync(() => {
+    const service = TestBed.inject(GoldPriceService);
+    const clear = spyOn(window, 'clearTimeout').and.callThrough();
+    TestBed.resetTestingModule();
+    expect(clear).toHaveBeenCalled();
+    tick(SAMPLE_LOADING_DELAY_MS);
+    expect(service.loading()).toBeTrue();
+  }));
 });

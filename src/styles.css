@@ -181,6 +181,29 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 .price-card h3 { font-size: 1rem; font-weight: 650; }
 .price-value { font-size: 2.8rem; font-weight: 650; line-height: 1.35; margin-block: 8px 4px; }
 .price-unit { font-size: .88rem; }
+.prices-empty { text-align: center; min-height: 170px; display: grid; place-items: center; }
+
+/* Static placeholders reserve the same line boxes as the loaded prices. No shimmer. */
+.skeleton {
+  display: inline-block; border-radius: 5px;
+  background: color-mix(in srgb, var(--secondary-surface) 78%, var(--theme-border));
+  vertical-align: middle;
+}
+.trend-stats .skeleton-stat { font-size: inherit; }
+.skeleton-cell { width: 6ch; height: .85em; }
+/* Mask the local text's exact font metrics so both Arabic and English keep their line boxes. */
+.skeleton-text { display: inline; position: relative; color: transparent; background: none; vertical-align: baseline; }
+.skeleton-text::after {
+  content: ''; position: absolute; inset-inline: 0; top: .15em; height: .85em; border-radius: 5px;
+  background: color-mix(in srgb, var(--secondary-surface) 78%, var(--theme-border));
+}
+.chart-skeleton { display: block; border: 1px solid var(--theme-border); }
+.comparison-loading .comparison-grid dd { color: transparent; position: relative; }
+.comparison-loading .comparison-grid dd::after {
+  content: ''; position: absolute; inset-inline-start: 0; top: .4em;
+  width: min(80%, 9ch); height: .85em; border-radius: 5px;
+  background: var(--secondary-surface);
+}
 
 /* Calculator */
 .calculator-layout > div { min-width: 0; }
@@ -195,6 +218,8 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 .validation-message:not(:empty) { margin-block-start: 10px; }
 .field[aria-invalid="true"] { border-color: var(--interactive-accent); box-shadow: inset 0 0 0 1px var(--interactive-accent); }
 .control-note { margin-block-start: 10px; font-size: .75rem; }
+/* Keep the readiness explanation's space when it disappears, including narrow English layouts. */
+.availability-note { min-height: 2lh; }
 .calculator-result { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 216px; padding: 20px; border-radius: 11px; }
 .result-icon { width: 40px; height: 40px; margin-block-end: 7px; }
 .calculator-result h3 { font-size: 1rem; font-weight: 650; }
@@ -204,6 +229,30 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 .calculation-details { width: 100%; margin-block-start: 14px; font-size: .8rem; }
 .calculation-details > div { display: flex; justify-content: space-between; gap: 12px; padding-block: 3px; }
 .calculation-details dd { text-align: end; min-width: 0; overflow-wrap: anywhere; }
+
+/* Single, restrained entrances; changing language/theme does not restart them. */
+.calculator-empty-icon { animation: empty-arrival 600ms ease-out; }
+.result-entrance { animation: result-arrival 180ms ease-out; }
+@keyframes empty-arrival { from { opacity: .8; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+@keyframes result-arrival { from { opacity: .9; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+/* Distinct names restart the same short fade on purity changes, without delays or stale data. */
+#trends[aria-busy="false"] :is(.trend-stats, .trend-comparison, .trend-chart) { animation-duration: 160ms; animation-timing-function: ease-out; }
+#trends[aria-busy="false"][data-transition="18"] :is(.trend-stats, .trend-comparison, .trend-chart) { animation-name: trend-18; }
+#trends[aria-busy="false"][data-transition="21"] :is(.trend-stats, .trend-comparison, .trend-chart) { animation-name: trend-21; }
+#trends[aria-busy="false"][data-transition="22"] :is(.trend-stats, .trend-comparison, .trend-chart) { animation-name: trend-22; }
+#trends[aria-busy="false"][data-transition="24"] :is(.trend-stats, .trend-comparison, .trend-chart) { animation-name: trend-24; }
+@keyframes trend-18 { from { opacity: .94; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+@keyframes trend-21 { from { opacity: .94; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+@keyframes trend-22 { from { opacity: .94; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+@keyframes trend-24 { from { opacity: .94; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .calculator-empty-icon, .result-entrance,
+  #trends[aria-busy="false"][data-transition] :is(.trend-stats, .trend-comparison, .trend-chart) {
+    animation: none; transition: none;
+  }
+}
 
 /* Trend controls, sample comparison and native SVG chart */
 .purity-tabs { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; border: 0; padding: 0; margin: 20px 0 0; }

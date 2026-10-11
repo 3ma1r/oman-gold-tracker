@@ -27,7 +27,7 @@ import { LanguageService } from '../services/language.service';
           </span>
         </div>
         <dl class="hero-details">
-          <div><dt>{{ lang.t('sampleDate') }}</dt><dd><time [attr.datetime]="goldPrices.sampleDate">{{ lang.date(goldPrices.sampleDate) }}</time></dd></div>
+          <div><dt>{{ lang.t('sampleDate') }}</dt><dd><time [attr.datetime]="goldPrices.sampleDate">{{ goldPrices.sampleDate ? lang.date(goldPrices.sampleDate) : '—' }}</time></dd></div>
           <div><dt>{{ lang.t('market') }}</dt><dd>{{ lang.t('oman') }}</dd></div>
           <div><dt>{{ lang.t('currency') }}</dt><dd>{{ lang.t('rial') }} <bdi>(OMR)</bdi></dd></div>
           <div><dt>{{ lang.t('unit') }}</dt><dd>{{ lang.t('perGram') }}</dd></div>

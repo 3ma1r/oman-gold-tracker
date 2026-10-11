@@ -6,7 +6,7 @@ import { LanguageService } from '../services/language.service';
   selector: 'app-price-history',
   standalone: true,
   template: `
-    <section id="history" class="panel bg-card" aria-labelledby="history-title">
+    <section id="history" class="panel bg-card" aria-labelledby="history-title" [attr.aria-busy]="goldPrices.loading()">
       <div class="section-heading">
         <svg class="section-icon text-accent" viewBox="0 0 32 36" fill="none" aria-hidden="true">
           <rect x="3" y="6" width="26" height="27" rx="3" stroke="currentColor" stroke-width="2.2" />
@@ -30,14 +30,24 @@ import { LanguageService } from '../services/language.service';
           </thead>
           <tbody>
             @for (day of goldPrices.history; track day.date) {
-              <tr>
-                <th scope="row"><time [attr.datetime]="day.date">{{ lang.date(day.date) }}</time></th>
+              <tr [attr.aria-hidden]="goldPrices.loading() ? 'true' : null">
+                <th scope="row">
+                  @if (goldPrices.loading()) { <span class="skeleton skeleton-text skeleton-date" aria-hidden="true">{{ lang.date(day.date) }}</span> }
+                  @else { <time [attr.datetime]="day.date">{{ lang.date(day.date) }}</time> }
+                </th>
                 @for (purity of historyPurities; track purity) {
-                  <td><bdi>{{ lang.price(day.prices[purity]) }}</bdi></td>
+                  <td>
+                    @if (goldPrices.loading()) { <span class="skeleton skeleton-text skeleton-cell" aria-hidden="true"><bdi>{{ lang.price(day.prices[purity]) }}</bdi></span> }
+                    @else { <bdi>{{ lang.price(day.prices[purity]) }}</bdi> }
+                  </td>
                 }
               </tr>
             } @empty {
-              <tr><td colspan="5">{{ lang.t('historyEmpty') }}</td></tr>
+              @if (goldPrices.loading()) {
+                <tr aria-hidden="true"><td colspan="5"><span class="skeleton skeleton-cell" aria-hidden="true"></span></td></tr>
+              } @else {
+                <tr><td colspan="5">{{ lang.t('historyEmpty') }}</td></tr>
+              }
             }
           </tbody>
         </table>

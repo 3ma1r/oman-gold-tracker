@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { LanguageService } from './services/language.service';
+import { GoldPriceService } from './services/gold-price.service';
 import { Header } from './components/header';
 import { Hero } from './components/hero';
 import { TodaysPrices } from './components/todays-prices';
@@ -16,4 +17,5 @@ import { Footer } from './components/footer';
 })
 export class App {
   protected readonly lang = inject(LanguageService);
+  protected readonly goldPrices = inject(GoldPriceService);
 }

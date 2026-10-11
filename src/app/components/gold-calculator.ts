@@ -27,7 +27,7 @@ interface GoldCalculation {
               <p class="text-muted">{{ lang.t('calculatorDescription') }}</p>
             </div>
           </div>
-          <form class="calculator-fields grid grid-cols-1 sm:grid-cols-[1.2fr_1fr_auto] gap-4" novalidate (submit)="calculate($event, weightField)">
+          <form class="calculator-fields grid grid-cols-1 sm:grid-cols-[1.2fr_1fr_auto] gap-4" novalidate [attr.aria-busy]="goldPrices.loading()" (submit)="calculate($event, weightField)">
             <div class="field-group">
               <label for="gold-purity">{{ lang.t('purityLabel') }}</label>
               <select #purityField id="gold-purity" name="gold-purity" class="field bg-card text-primary" (change)="changePurity(purityField.value)">
@@ -40,13 +40,14 @@ interface GoldCalculation {
               <label for="gold-weight">{{ lang.t('weightLabel') }}</label>
               <input #weightField id="gold-weight" name="gold-weight" class="field bg-card text-primary" type="number" inputmode="decimal" min="0" step="any" required [placeholder]="lang.t('weightPlaceholder')" aria-describedby="calculator-note calculator-error" [attr.aria-invalid]="error ? 'true' : null" (input)="clearResult()" />
             </div>
-            <button class="calculate-button" type="submit" aria-describedby="calculator-note">{{ lang.t('calculate') }}</button>
+            <button class="calculate-button" type="submit" [disabled]="!canCalculate" aria-describedby="calculator-availability calculator-note">{{ lang.t('calculate') }}</button>
           </form>
+          <p id="calculator-availability" class="control-note availability-note text-muted">{{ goldPrices.loading() ? lang.t('calculatorLoading') : !goldPrices.latest ? lang.t('calculatorUnavailable') : '' }}</p>
           <p id="calculator-error" class="validation-message text-accent" role="alert" aria-atomic="true">{{ error }}</p>
-          <p id="calculator-note" class="control-note text-muted">{{ lang.t('estimateBeforeDate') }} <time [attr.datetime]="goldPrices.sampleDate">{{ lang.date(goldPrices.sampleDate) }}</time>{{ lang.t('estimateAfterDate') }}</p>
+          <p id="calculator-note" class="control-note text-muted">{{ lang.t('estimateBeforeDate') }} <time [attr.datetime]="goldPrices.sampleDate">{{ goldPrices.sampleDate ? lang.date(goldPrices.sampleDate) : '—' }}</time>{{ lang.t('estimateAfterDate') }}</p>
         </div>
         <div class="calculator-result bg-secondary" aria-labelledby="result-title" role="status" aria-live="polite" aria-atomic="true">
-          <svg class="result-icon text-gold" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <svg class="result-icon text-gold" [class.calculator-empty-icon]="!result" viewBox="0 0 40 40" fill="none" aria-hidden="true">
             <ellipse cx="25" cy="8" rx="10" ry="4" stroke="currentColor" stroke-width="1.5" />
             <path d="M15 8v14c0 5 20 5 20 0V8M15 13c0 5 20 5 20 0M15 18c0 5 20 5 20 0" stroke="currentColor" stroke-width="1.5" />
             <ellipse cx="13" cy="25" rx="10" ry="4" stroke="currentColor" stroke-width="1.5" />
@@ -55,13 +56,13 @@ interface GoldCalculation {
           <h3 id="result-title">{{ lang.t('goldValue') }}</h3>
           <div class="result-divider"></div>
           @if (result; as calculation) {
-            <p class="result-value"><bdi>{{ lang.price(calculation.total) }}</bdi></p>
+            <p class="result-value result-entrance"><bdi>{{ lang.price(calculation.total) }}</bdi></p>
           } @else {
             <p class="result-value" [attr.aria-label]="lang.t('calculationEmpty')">—</p>
           }
           <p class="text-muted">{{ lang.t('rial') }}</p>
           @if (result; as calculation) {
-            <dl class="calculation-details text-muted">
+            <dl class="calculation-details result-entrance text-muted">
               <div><dt>{{ lang.t('purity') }}</dt><dd>{{ lang.purity(calculation.purity) }}</dd></div>
               <div><dt>{{ lang.t('weight') }}</dt><dd><bdi>{{ lang.number(calculation.weight) }}</bdi> {{ lang.t('grams') }}</dd></div>
               <div><dt>{{ lang.t('gramPrice') }}</dt><dd><bdi>{{ lang.currency(calculation.pricePerGram) }}</bdi></dd></div>
@@ -81,6 +82,7 @@ export class GoldCalculator {
   private errorKey: 'invalidWeight' | 'overflowingTotal' | null = null;
 
   get error(): string { return this.errorKey ? this.lang.t(this.errorKey) : ''; }
+  get canCalculate(): boolean { return !this.goldPrices.loading() && this.goldPrices.latest !== null; }
 
   changePurity(value: string): void {
     const purity = this.purities.find(purity => String(purity) === value);
@@ -97,6 +99,8 @@ export class GoldCalculator {
 
   calculate(event: Event, weightField: HTMLInputElement): void {
     event.preventDefault();
+    // Guard native Enter/programmatic submissions as well as the disabled button.
+    if (!this.canCalculate) return;
     this.clearResult();
     const weight = weightField.valueAsNumber;
 
@@ -105,7 +109,7 @@ export class GoldCalculator {
       return;
     }
 
-    const pricePerGram = this.goldPrices.latest.prices[this.selectedPurity];
+    const pricePerGram = this.goldPrices.latest!.prices[this.selectedPurity];
     const total = weight * pricePerGram;
     if (!Number.isFinite(total)) {
       this.errorKey = 'overflowingTotal';

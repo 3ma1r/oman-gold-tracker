@@ -1,10 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { App } from './app';
 import { GoldCalculator } from './components/gold-calculator';
 import { PriceTrend } from './components/price-trend';
 import { TRANSLATIONS } from './data/translations';
-import { GoldPriceService } from './services/gold-price.service';
+import { GoldPriceService, SAMPLE_LOADING_DELAY_MS } from './services/gold-price.service';
 import { LANGUAGE_STORAGE_KEY, LanguageService } from './services/language.service';
 import { THEME_STORAGE_KEY, ThemeService } from './services/theme.service';
 
@@ -36,6 +36,7 @@ describe('Dashboard theme switching', () => {
   });
 
   function render(): void {
+    fakeAsync(() => { TestBed.inject(GoldPriceService); tick(SAMPLE_LOADING_DELAY_MS); })();
     fixture = TestBed.createComponent(App);
     element = fixture.nativeElement;
     theme = TestBed.inject(ThemeService);
@@ -120,7 +121,7 @@ describe('Dashboard theme switching', () => {
         expect(input.value).toBe('2.34567');
         expect(element.querySelector<HTMLSelectElement>('#gold-purity')?.value).toBe('22');
         expect(calculator.result).toBe(result);
-        expect(result?.total).toBe(2.34567 * prices.latest.prices[22]);
+        expect(result?.total).toBe(2.34567 * prices.latest!.prices[22]);
         expect(element.querySelector('.result-value')?.textContent).toBe(language.price(result!.total));
         expect(calculator.error).toBe('');
         expect(chart.selectedPurity()).toBe(18);

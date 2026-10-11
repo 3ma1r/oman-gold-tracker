@@ -1,10 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { App } from './app';
 import { GoldCalculator } from './components/gold-calculator';
 import { PriceTrend } from './components/price-trend';
 import { Language, TRANSLATIONS } from './data/translations';
-import { GoldPriceService } from './services/gold-price.service';
+import { GoldPriceService, SAMPLE_LOADING_DELAY_MS } from './services/gold-price.service';
 import { LanguageService } from './services/language.service';
 import { ThemeService } from './services/theme.service';
 
@@ -23,6 +23,7 @@ describe('Dashboard language switching', () => {
     spyOn(Storage.prototype, 'getItem').and.returnValue(null);
     spyOn(Storage.prototype, 'setItem');
     await TestBed.configureTestingModule({ imports: [App] }).compileComponents();
+    fakeAsync(() => { TestBed.inject(GoldPriceService); tick(SAMPLE_LOADING_DELAY_MS); })();
     fixture = TestBed.createComponent(App);
     element = fixture.nativeElement;
     language = TestBed.inject(LanguageService);
@@ -84,7 +85,7 @@ describe('Dashboard language switching', () => {
       expect(element.querySelector('h1')?.textContent).toBe(text.heroTitle);
       expect(element.querySelector('.hero-copy p')?.textContent).toBe(text.heroDescription);
       expect(element.querySelector('.sample-badge')?.textContent).toContain(text.sampleData);
-      expect(element.querySelector('app-hero time')?.textContent).toBe(language.date(prices.sampleDate));
+      expect(element.querySelector('app-hero time')?.textContent).toBe(language.date(prices.sampleDate!));
       expect(element.querySelector('.price-data-note')?.textContent).toContain(text.samplePricesAfterDate);
       expect(element.querySelector('#calculator-title')?.textContent).toBe(text.calculator);
       expect(element.querySelector('label[for="gold-purity"]')?.textContent).toBe(text.purityLabel);
@@ -128,12 +129,12 @@ describe('Dashboard language switching', () => {
       expect(element.querySelector<HTMLSelectElement>('#gold-purity')?.value).toBe('22');
       expect(calculator.selectedPurity).toBe(22);
       expect(calculator.result).toBe(result);
-      expect(calculator.result?.total).toBe(2.34567 * prices.latest.prices[22]);
+      expect(calculator.result?.total).toBe(2.34567 * prices.latest!.prices[22]);
       expect(element.querySelector('.result-value')?.textContent).toBe(language.price(result!.total));
       const details = element.querySelectorAll('.calculation-details dd');
       expect(details[0].textContent).toBe(language.purity(22));
       expect(details[1].textContent).toContain(language.number(2.34567));
-      expect(details[2].textContent).toBe(language.currency(prices.latest.prices[22]));
+      expect(details[2].textContent).toBe(language.currency(prices.latest!.prices[22]));
       expect(chart.selectedPurity()).toBe(18);
       expect(chart.trend()).toBe(trend);
       expect(element.querySelector('button[aria-pressed="true"]')?.getAttribute('data-purity')).toBe('18');
@@ -141,7 +142,7 @@ describe('Dashboard language switching', () => {
       expect(element.querySelector('.price-chart desc')?.textContent).toBe(chart.chartDescription());
       expect(chart.chartDescription()).toContain(language.purity(18));
       expect(chart.chartDescription()).toContain(language.date(prices.days[0].date));
-      expect(chart.chartDescription()).toContain(language.date(prices.sampleDate));
+      expect(chart.chartDescription()).toContain(language.date(prices.sampleDate!));
       expect(chart.movement()).toBe(TRANSLATIONS[selection].movementUp);
       expect(element.querySelector('.chart-layout')?.getAttribute('dir')).toBe('ltr');
       expect(element.querySelector('.chart-dates > span')?.getAttribute('dir')).toBe(language.direction());
@@ -172,7 +173,7 @@ describe('Dashboard language switching', () => {
         submit('1', purity);
         element.querySelector<HTMLButtonElement>(`[data-purity="${purity}"]`)!.click();
         fixture.detectChanges();
-        const expected = language.price(prices.latest.prices[purity]);
+        const expected = language.price(prices.latest!.prices[purity]);
         expect(element.querySelectorAll('.price-value')[index].textContent).toBe(expected);
         expect(element.querySelectorAll('tbody tr:first-child td')[index].textContent).toBe(expected);
         expect(element.querySelector('.result-value')?.textContent).toBe(expected);

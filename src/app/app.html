@@ -3,6 +3,7 @@
 <main id="main-content" tabindex="-1">
   <app-hero />
   <div class="page-shell page-sections">
+    <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ lang.t(goldPrices.loading() ? 'sampleLoading' : goldPrices.days.length ? 'sampleReady' : 'pricesEmpty') }}</p>
     <app-todays-prices />
     <app-gold-calculator />
     <app-price-trend />

@@ -13,7 +13,10 @@ import { GoldPurity } from '../models/gold-price';
         </svg>
         <h3 [id]="'price-' + purity()">{{ lang.goldPurity(purity()) }}</h3>
       </div>
-      <p class="price-value"><bdi>{{ lang.price(price()) }}</bdi></p>
+      <p class="price-value" [attr.aria-hidden]="loading() ? 'true' : null">
+        @if (loading()) { <span class="skeleton skeleton-text skeleton-price" aria-hidden="true"><bdi>{{ lang.price(price()) }}</bdi></span> }
+        @else { <bdi>{{ lang.price(price()) }}</bdi> }
+      </p>
       <p class="price-unit text-muted">{{ lang.t('rialPerGram') }}</p>
     </article>
   `,
@@ -21,5 +24,6 @@ import { GoldPurity } from '../models/gold-price';
 export class PriceCard {
   protected readonly lang = inject(LanguageService);
   readonly purity = input.required<GoldPurity>();
-  readonly price = input.required<number>();
+  readonly price = input.required<number | null>();
+  readonly loading = input(false);
 }
