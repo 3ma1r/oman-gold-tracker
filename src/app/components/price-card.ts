@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { LanguageService } from '../services/language.service';
 import { GoldPurity } from '../models/gold-price';
 
@@ -18,6 +18,9 @@ import { GoldPurity } from '../models/gold-price';
         @else { <bdi>{{ lang.price(price()) }}</bdi> }
       </p>
       <p class="price-unit text-muted">{{ lang.t('rialPerGram') }}</p>
+      <button class="price-card-action" type="button" [disabled]="loading() || price() === null" [attr.aria-labelledby]="'price-' + purity() + ' price-hint-' + purity()" (click)="useInCalculator.emit({ purity: purity(), keyboard: $event.detail === 0 })">
+        <span class="price-card-hint" [id]="'price-hint-' + purity()">{{ lang.t('useInCalculator') }}</span>
+      </button>
     </article>
   `,
 })
@@ -26,4 +29,5 @@ export class PriceCard {
   readonly purity = input.required<GoldPurity>();
   readonly price = input.required<number | null>();
   readonly loading = input(false);
+  readonly useInCalculator = output<{ purity: GoldPurity; keyboard: boolean }>();
 }

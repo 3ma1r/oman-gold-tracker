@@ -6,6 +6,7 @@ import { GoldPriceService, SAMPLE_LOADING_DELAY_MS } from '../services/gold-pric
 import { SAMPLE_GOLD_PRICES } from '../data/sample-gold-prices';
 import { DailyGoldPrice, DateOnly, GOLD_PURITIES } from '../models/gold-price';
 import { formatNumber, formatPercentage, formatPrice, formatSampleDate } from '../services/gold-price-format';
+import { LanguageService } from '../services/language.service';
 
 // Edge-case fixtures only; the application always reads the shared sample dataset.
 function seriesWith(values: readonly number[]): DailyGoldPrice[] {
@@ -219,4 +220,108 @@ describe('PriceTrend', () => {
     expect(element.querySelector('polyline')?.getAttribute('points')?.split(' ').length).toBe(1);
     expect(element.querySelector('.trend-comparison')?.textContent).toContain('لا تتوفر بيانات لليوم السابق');
   });
+
+  it('selects the nearest date at different SVG scales and clamps endpoints', () => {
+    const { fixture, component, element } = render();
+    const svg = element.querySelector('svg.price-chart')!;
+    const rect = spyOn(svg, 'getBoundingClientRect');
+    for (const width of [180, 340, 900]) {
+      rect.and.returnValue(new DOMRect(30, 0, width, 210));
+      for (const index of [0, 8, 15, 29]) {
+        const x = 30 + component.trend().points[index].x / CHART_WIDTH * width;
+        svg.dispatchEvent(new MouseEvent('click', { clientX: x }));
+        fixture.detectChanges();
+        expect(component.selectedDate()).toBe(SAMPLE_GOLD_PRICES[index].date);
+        expect(element.querySelector('.chart-tooltip time')?.getAttribute('datetime')).toBe(SAMPLE_GOLD_PRICES[index].date);
+        expect(element.querySelector('.chart-tooltip')?.textContent).toContain(formatPrice(SAMPLE_GOLD_PRICES[index].prices[24]));
+      }
+      svg.dispatchEvent(new MouseEvent('click', { clientX: -50 }));
+      expect(component.selectedDate()).toBe(SAMPLE_GOLD_PRICES[0].date);
+      svg.dispatchEvent(new MouseEvent('click', { clientX: width + 100 }));
+      expect(component.selectedDate()).toBe(SAMPLE_GOLD_PRICES[29].date);
+    }
+  });
+
+  it('keeps hover previews temporary, distinct and silent, including after keyboard selection', () => {
+    const { fixture, component, element } = render();
+    const svg = element.querySelector('svg.price-chart')!;
+    spyOn(svg, 'getBoundingClientRect').and.returnValue(new DOMRect(0, 0, 900, 240));
+    const control = element.querySelector('.chart-plot')!;
+    control.dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', cancelable: true }));
+    fixture.detectChanges();
+    const announcement = element.querySelector('.chart-selection-announcement')!.textContent;
+    svg.dispatchEvent(new PointerEvent('pointermove', { clientX: 888, pointerType: 'mouse' }));
+    fixture.detectChanges();
+    expect(component.selectedDate()).toBe(SAMPLE_GOLD_PRICES[0].date);
+    expect(component.tooltipPoint()?.day.date).toBe(SAMPLE_GOLD_PRICES[29].date);
+    expect(element.querySelector('.tooltip-state')?.textContent).toContain('معاينة');
+    expect(element.querySelector('.chart-marker-preview')).not.toBeNull();
+    expect(element.querySelector('.chart-marker-selected')).not.toBeNull();
+    expect(element.querySelector('.chart-selection-announcement')!.textContent).toBe(announcement);
+    control.dispatchEvent(new PointerEvent('pointerleave'));
+    fixture.detectChanges();
+    expect(component.tooltipPoint()?.day.date).toBe(SAMPLE_GOLD_PRICES[0].date);
+    expect(element.querySelector('.chart-marker-preview')).toBeNull();
+    svg.dispatchEvent(new PointerEvent('pointermove', { clientX: 888, pointerType: 'touch' }));
+    expect(component.hoverDate()).toBeNull();
+  });
+
+  it('supports a single keyboard control, chronological arrows, endpoints and clearing in both directions', () => {
+    const { fixture, component, element } = render();
+    const language = TestBed.inject(LanguageService);
+    for (const lang of ['ar', 'en'] as const) {
+      language.setLanguage(lang);
+      fixture.detectChanges();
+      const control = element.querySelector('.chart-plot')!;
+      expect(element.querySelectorAll('.chart-plot[tabindex="0"]').length).toBe(1);
+      const key = (value: string) => {
+        const event = new KeyboardEvent('keydown', { key: value, cancelable: true });
+        control.dispatchEvent(event); fixture.detectChanges();
+        expect(event.defaultPrevented).toBeTrue();
+      };
+      key('Home'); expect(component.selectedDate()).toBe(SAMPLE_GOLD_PRICES[0].date);
+      key('ArrowLeft'); expect(component.selectedDate()).toBe(SAMPLE_GOLD_PRICES[0].date);
+      key('ArrowRight'); expect(component.selectedDate()).toBe(SAMPLE_GOLD_PRICES[1].date);
+      key('ArrowUp'); expect(component.selectedDate()).toBe(SAMPLE_GOLD_PRICES[2].date);
+      key('ArrowDown'); expect(component.selectedDate()).toBe(SAMPLE_GOLD_PRICES[1].date);
+      key('End'); key('ArrowRight'); expect(component.selectedDate()).toBe(SAMPLE_GOLD_PRICES[29].date);
+      expect(element.querySelector('.chart-selection-announcement')?.textContent).toContain(language.price(51.2));
+      key('Escape');
+      expect(component.selectedDate()).toBeNull();
+      expect(element.querySelector('.chart-tooltip')).toBeNull();
+      expect(element.querySelector('.chart-selection-announcement')?.textContent).toBe(language.t('chartSelectionCleared'));
+    }
+  });
+
+  it('preserves the selected date and translates its updated price when purity/language changes', () => {
+    const { fixture, component, element } = render();
+    element.querySelector('.chart-plot')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'End' }));
+    for (const purity of GOLD_PURITIES) {
+      element.querySelector<HTMLButtonElement>(`[data-purity="${purity}"]`)!.click();
+      fixture.detectChanges();
+      expect(component.selectedDate()).toBe(SAMPLE_GOLD_PRICES[29].date);
+      expect(component.tooltipPoint()?.value).toBe(SAMPLE_GOLD_PRICES[29].prices[purity]);
+    }
+    const lang = TestBed.inject(LanguageService);
+    lang.setLanguage('en'); fixture.detectChanges();
+    expect(element.querySelector('.tooltip-state')?.textContent).toBe('Selected day');
+    expect(element.querySelector('.chart-selection-announcement')?.textContent).toContain('24K, 51.200 OMR / gram');
+  });
+
+  for (const values of [[], [50], [50, 50, 50]]) {
+    it(`handles selection safely for ${values.length} edge-case records`, () => {
+      const { fixture, component, element } = render(seriesWith(values));
+      for (const key of ['Home', 'ArrowRight', 'End', 'ArrowLeft']) {
+        component.chartKeydown(new KeyboardEvent('keydown', { key }));
+        fixture.detectChanges();
+        expect(element.innerHTML).not.toMatch(/NaN|Infinity/);
+      }
+      const svg = element.querySelector('svg.price-chart');
+      if (svg) {
+        spyOn(svg, 'getBoundingClientRect').and.returnValue(new DOMRect(0, 0, 200, 210));
+        component.selectPoint(new MouseEvent('click', { clientX: 199 }), svg);
+        expect(component.selectedDate()).toBe(component.trend().series.at(-1)!.date);
+      } else expect(component.selectedDate()).toBeNull();
+    });
+  }
 });

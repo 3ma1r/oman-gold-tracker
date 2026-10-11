@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { GoldPurity } from '../models/gold-price';
+import { DateOnly, GoldPurity } from '../models/gold-price';
 import { GoldPriceService } from '../services/gold-price.service';
 import { LanguageService } from '../services/language.service';
 import { buildPriceTrend, CHART_HEIGHT, CHART_WIDTH } from './price-trend-chart';
@@ -64,7 +64,9 @@ import { buildPriceTrend, CHART_HEIGHT, CHART_WIDTH } from './price-trend-chart'
             @if (goldPrices.loading()) {
               <div class="price-chart chart-skeleton skeleton" aria-hidden="true"></div>
             } @else {
-            <svg class="price-chart" [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight" preserveAspectRatio="none" role="img" aria-labelledby="trend-chart-title trend-chart-description">
+            <div class="chart-plot" tabindex="0" role="group" [attr.aria-label]="lang.t('chartInteraction')" aria-describedby="chart-instructions trend-chart-description" (keydown)="chartKeydown($event)" (pointerleave)="hoverDate.set(null)">
+            <div class="sr-only" id="chart-instructions">{{ lang.t('chartInstructions') }}</div>
+            <svg #plot class="price-chart" [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight" preserveAspectRatio="none" role="img" aria-labelledby="trend-chart-title trend-chart-description" (click)="selectPoint($event, plot)" (pointermove)="previewPoint($event, plot)">
               <title id="trend-chart-title">{{ lang.t('chartTitle', { purity: lang.purity(selectedPurity()) }) }}</title>
               <desc id="trend-chart-description">{{ chartDescription() }}</desc>
               @for (tick of trend().priceTicks; track $index) {
@@ -78,7 +80,24 @@ import { buildPriceTrend, CHART_HEIGHT, CHART_WIDTH } from './price-trend-chart'
               @if (trend().points.length === 1) {
                 <circle class="chart-point" [attr.cx]="trend().points[0].x" [attr.cy]="trend().points[0].y" r="3" />
               }
+              @if (selectedPoint(); as point) {
+                <line class="chart-selection-line" [attr.x1]="point.x" [attr.x2]="point.x" y1="12" [attr.y2]="chartHeight - 12" vector-effect="non-scaling-stroke" />
+              }
             </svg>
+            @if (selectedPoint(); as point) {
+              <span class="chart-marker chart-marker-selected" [style.left.%]="point.x / chartWidth * 100" [style.top.%]="point.y / chartHeight * 100" aria-hidden="true"></span>
+            }
+            @if (tooltipPoint(); as point) {
+              @if (isPreview()) {
+                <span class="chart-marker chart-marker-preview" [style.left.%]="point.x / chartWidth * 100" [style.top.%]="point.y / chartHeight * 100" aria-hidden="true"></span>
+              }
+              <div class="chart-tooltip" [class.tooltip-below]="point.y < chartHeight / 2" [style.--point-x]="point.x / chartWidth * 100" [attr.dir]="lang.direction()" aria-hidden="true">
+                <span class="tooltip-state text-muted">{{ lang.t(isPreview() ? 'chartPreview' : 'chartSelected') }}</span>
+                <time [attr.datetime]="point.day.date">{{ lang.date(point.day.date) }}</time>
+                <span>{{ lang.purity(selectedPurity()) }} · <bdi>{{ lang.price(point.value) }}</bdi> {{ lang.t('rialPerGram') }}</span>
+              </div>
+            }
+            </div>
             }
             <div class="chart-dates text-muted">
               <span [attr.dir]="lang.direction()">{{ lang.t('start') }} <time [attr.datetime]="trend().series.at(0)?.date">{{ firstDate() }}</time></span>
@@ -90,6 +109,7 @@ import { buildPriceTrend, CHART_HEIGHT, CHART_WIDTH } from './price-trend-chart'
       } @else {
         <p class="chart-empty text-muted">{{ lang.t('chartEmpty') }}</p>
       }
+      <p class="sr-only chart-selection-announcement" role="status" aria-live="polite" aria-atomic="true">{{ selectionAnnouncement() }}</p>
     </section>
   `,
 })
@@ -98,7 +118,21 @@ export class PriceTrend {
   protected readonly lang = inject(LanguageService);
   readonly purities = this.goldPrices.purities;
   readonly selectedPurity = signal<GoldPurity>(24);
+  readonly selectedDate = signal<DateOnly | null>(null);
+  readonly hoverDate = signal<DateOnly | null>(null);
+  private readonly keyboardSelection = signal<'value' | 'cleared' | null>(null);
   readonly trend = computed(() => buildPriceTrend(this.goldPrices.days, this.selectedPurity()));
+  readonly selectedPoint = computed(() => this.trend().points.find(point => point.day.date === this.selectedDate()) ?? null);
+  readonly tooltipPoint = computed(() => this.trend().points.find(point => point.day.date === this.hoverDate()) ?? this.selectedPoint());
+  readonly isPreview = computed(() => !!this.hoverDate() && this.hoverDate() !== this.selectedDate());
+  readonly selectionAnnouncement = computed(() => {
+    if (this.keyboardSelection() === 'cleared') return this.lang.t('chartSelectionCleared');
+    const point = this.selectedPoint();
+    return this.keyboardSelection() === 'value' && point ? this.lang.t('chartSelectionValue', {
+      date: this.lang.date(point.day.date), purity: this.lang.purity(this.selectedPurity()),
+      price: this.lang.price(point.value), unit: this.lang.t('rialPerGram'),
+    }) : '';
+  });
   readonly chartWidth = CHART_WIDTH;
   readonly chartHeight = CHART_HEIGHT;
   protected readonly skeletonTicks = [0, 1, 2, 3, 4];
@@ -119,6 +153,51 @@ export class PriceTrend {
     firstPrice: this.lang.price(this.trend().points[0]?.value ?? null), lastPrice: this.lang.price(this.trend().latest),
     movement: this.movement(),
   }));
+
+  private nearestDate(event: MouseEvent, svg: Element): DateOnly | null {
+    const rect = svg.getBoundingClientRect();
+    if (this.goldPrices.loading() || rect.width <= 0 || !this.trend().points.length) return null;
+    // Client coordinates and the current rendered width keep taps accurate at
+    // every SVG scale. Physical x always runs oldest-to-newest, even in RTL.
+    const x = (event.clientX - rect.left) / rect.width * this.chartWidth;
+    return this.trend().points.reduce((nearest, point) =>
+      Math.abs(point.x - x) < Math.abs(nearest.x - x) ? point : nearest).day.date;
+  }
+
+  selectPoint(event: MouseEvent, svg: Element): void {
+    const date = this.nearestDate(event, svg);
+    if (!date) return;
+    this.selectedDate.set(date);
+    this.hoverDate.set(null);
+    this.keyboardSelection.set(null);
+  }
+
+  previewPoint(event: PointerEvent, svg: Element): void {
+    if (event.pointerType !== 'mouse' && event.pointerType !== 'pen') return;
+    const date = this.nearestDate(event, svg);
+    this.hoverDate.set(date === this.selectedDate() ? null : date);
+  }
+
+  chartKeydown(event: KeyboardEvent): void {
+    const keys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Escape'];
+    if (!keys.includes(event.key)) return;
+    event.preventDefault();
+    this.hoverDate.set(null);
+    if (event.key === 'Escape') {
+      this.selectedDate.set(null);
+      this.keyboardSelection.set('cleared');
+      return;
+    }
+    const points = this.trend().points;
+    if (this.goldPrices.loading() || !points.length) return;
+    const current = points.findIndex(point => point.day.date === this.selectedDate());
+    const forward = event.key === 'ArrowRight' || event.key === 'ArrowUp';
+    const index = event.key === 'Home' ? 0 : event.key === 'End' ? points.length - 1
+      : current < 0 ? forward ? 0 : points.length - 1
+      : Math.max(0, Math.min(points.length - 1, current + (forward ? 1 : -1)));
+    this.selectedDate.set(points[index].day.date);
+    this.keyboardSelection.set('value');
+  }
 
   private dateLabel(index: number): string {
     const date = this.trend().series.at(index)?.date;

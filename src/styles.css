@@ -53,6 +53,9 @@
     --hero-end: var(--color-espresso);
     --hero-shade: color-mix(in srgb, var(--color-espresso) 45%, transparent);
     --hero-highlight: color-mix(in srgb, var(--gold-accent) 40%, transparent);
+    --hero-edge-shade: transparent;
+    --hero-strip: color-mix(in srgb, var(--color-espresso) 74%, transparent);
+    --panel-shadow: color-mix(in srgb, var(--color-cocoa) 8%, transparent);
     color-scheme: light;
     background-color: var(--page-background);
   }
@@ -77,8 +80,11 @@
     --hero-start: var(--theme-border);
     --hero-middle: var(--secondary-surface);
     --hero-end: var(--page-background);
-    --hero-shade: transparent;
+    --hero-shade: color-mix(in srgb, var(--color-espresso) 58%, transparent);
     --hero-highlight: color-mix(in srgb, var(--gold-accent) 12%, transparent);
+    --hero-edge-shade: color-mix(in srgb, var(--page-background) 16%, transparent);
+    --hero-strip: color-mix(in srgb, var(--page-background) 82%, transparent);
+    --panel-shadow: color-mix(in srgb, var(--color-espresso) 24%, transparent);
     color-scheme: dark;
   }
 
@@ -108,16 +114,16 @@ section[id], main[id] { scroll-margin-top: var(--anchor-offset); }
 app-header, app-hero, app-todays-prices, app-price-card,
 app-gold-calculator, app-price-trend, app-price-history, app-footer { display: block; min-width: 0; }
 .page-shell { width: min(1160px, calc(100% - 64px)); margin-inline: auto; }
-.page-sections { display: grid; gap: 20px; padding-block: 20px 24px; }
+.page-sections { display: grid; gap: 22px; padding-block: 20px 28px; }
 .panel {
   padding: 24px;
   border: 1px solid var(--theme-border);
-  border-radius: 14px;
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-cocoa) 7%, transparent);
+  border-radius: 12px;
+  box-shadow: 0 5px 18px var(--panel-shadow);
 }
 .section-heading { display: flex; align-items: flex-start; gap: 14px; }
 .section-icon { width: 32px; height: 36px; margin-block-start: 2px; }
-.section-heading h2 { font-size: 1.45rem; font-weight: 700; line-height: 1.6; }
+.section-heading h2 { font-size: 1.4rem; font-weight: 700; line-height: 1.6; text-wrap: balance; }
 .section-heading p { font-size: .9rem; margin-block-start: 3px; }
 .skip-link {
   position: fixed; inset-inline-start: 20px; top: -100px; z-index: 100;
@@ -128,7 +134,7 @@ app-gold-calculator, app-price-trend, app-price-history, app-footer { display: b
 
 /* Header */
 app-header { position: sticky; top: 0; z-index: 50; }
-app-header header { border-block-end: 1px solid var(--theme-border); }
+app-header header { border-block-end: 1px solid var(--theme-border); box-shadow: 0 2px 10px var(--panel-shadow); }
 .header-inner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 24px; padding-block: 14px; }
 .brand { display: flex; align-items: center; gap: 12px; min-width: 0; border-radius: 4px; }
 .brand-mark { width: 58px; height: 44px; }
@@ -136,7 +142,7 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 .brand-caption { display: block; font-size: .7rem; margin-block-start: 4px; }
 .header-nav { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; justify-content: center; min-width: 0; }
 .header-nav a { padding-block: 6px; font-size: .94rem; font-weight: 550; border-block-end: 2px solid transparent; }
-.header-nav a:hover { color: var(--interactive-accent); border-block-end-color: var(--gold-accent); }
+.header-nav a:hover, .header-nav a[aria-current="location"] { color: var(--interactive-accent); border-block-end-color: var(--gold-accent); }
 .header-controls { display: flex; align-items: center; gap: 8px; }
 .language-button, .theme-button { min-height: 44px; border: 1px solid var(--control-border); border-radius: 9px; font-size: .85rem; }
 .language-button { padding: 8px 14px; }
@@ -144,42 +150,69 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 .theme-button svg { width: 22px; height: 22px; }
 .language-button:hover:not(:disabled), .theme-button:hover:not(:disabled) { background: var(--secondary-surface); }
 
-/* Warm gradient is a placeholder for the approved hero photograph. */
+/* Original local artwork: never mirrored or stretched. The last layer is its warm fallback. */
 .hero {
+  position: relative; isolation: isolate; overflow: clip;
   color: var(--hero-text);
+  background-color: var(--hero-end);
+}
+/* Only the extended decorative artwork layer is softened; HTML stays sharp. */
+.hero-artwork {
+  position: absolute; inset: -4px; z-index: -2; filter: blur(1.5px);
   background:
-    linear-gradient(var(--hero-shade), var(--hero-shade)),
-    radial-gradient(ellipse at 10% 95%, var(--hero-highlight), transparent 56%),
+    url('/images/oman-gold-hero.png'),
     linear-gradient(110deg, var(--hero-start) 0%, var(--hero-middle) 38%, var(--hero-end) 78%);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.hero::after {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(90deg, var(--hero-edge-shade), var(--hero-shade) 42%, var(--hero-shade));
+}
+:root[dir="ltr"] .hero::after {
+  /* English content overlaps the brighter scenery: shade that side, not the coins. */
+  background: linear-gradient(90deg, color-mix(in srgb, var(--color-espresso) 72%, transparent), var(--hero-shade) 54%, var(--hero-edge-shade));
 }
 .hero :focus-visible { outline-color: var(--hero-text); }
-.hero-inner { padding-block: 20px 22px; }
+.hero-inner {
+  position: relative; min-height: clamp(360px, 29vw, 440px);
+  display: flex; padding-block: 20px 22px;
+}
+.hero-content { display: flex; flex-direction: column; width: min(720px, 100%); margin-inline-end: auto; text-align: start; }
 .breadcrumb ol { display: flex; flex-wrap: wrap; gap: 10px; padding: 0; margin: 0; list-style: none; font-size: .8rem; }
 .breadcrumb a:hover { text-decoration: underline; }
-.hero-copy { max-width: 740px; padding-block: 22px 18px; }
-.hero h1 { color: var(--hero-text); font-size: clamp(2rem, 4vw, 3.35rem); font-weight: 750; line-height: 1.4; }
-.hero-copy p { max-width: 650px; font-size: 1.15rem; line-height: 1.85; margin-block: 10px 16px; }
+.hero-copy { flex: 1; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding-block: 18px; }
+.hero h1 { color: var(--hero-text); font-size: clamp(2rem, 3.6vw, 3.2rem); font-weight: 750; line-height: 1.4; text-wrap: balance; }
+.hero-copy p { max-width: 650px; font-size: 1.1rem; line-height: 1.85; margin-block: 10px 16px; text-wrap: pretty; }
 .sample-badge { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 14px; font-size: .8rem; font-weight: 600; }
 .sample-badge svg { width: 17px; height: 17px; }
 .hero-details {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
-  max-width: 680px; margin-inline-start: auto; padding: 14px 8px;
+  width: 100%; padding: 14px 8px;
   border: 1px solid color-mix(in srgb, var(--color-oatmeal) 38%, transparent);
-  border-radius: 12px; background: color-mix(in srgb, var(--color-espresso) 34%, transparent);
+  border-radius: 12px; background: var(--hero-strip); backdrop-filter: blur(5px);
   color: var(--hero-text);
 }
 .hero-details > div { padding-inline: 14px; text-align: center; }
 .hero-details > div + div { border-inline-start: 1px solid color-mix(in srgb, var(--color-oatmeal) 30%, transparent); }
 .hero-details dt { font-size: .75rem; margin-block-end: 4px; }
-.hero-details dd { font-size: .88rem; }
+.hero-details dd { font-size: .85rem; font-weight: 550; }
 
 /* Today's price cards */
 .price-data-note { margin-block-end: 10px; font-size: .8rem; }
-.price-card { min-height: 170px; text-align: center; padding: 22px 16px 20px; }
+.price-card { position: relative; min-height: 198px; text-align: center; padding: 22px 16px 48px; transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease; }
+.price-card-action { position: absolute; inset: 0; width: 100%; border: 0; border-radius: inherit; background: transparent; color: var(--secondary-text); padding: 0 12px 13px; display: flex; align-items: flex-end; justify-content: center; }
+.price-card-hint { font-size: .75rem; text-decoration: underline; text-underline-offset: 3px; }
+.price-card-action:disabled { cursor: not-allowed; }
+.price-card:has(.price-card-action:focus-visible) { transform: translateY(-2px); border-color: var(--interactive-accent); box-shadow: 0 8px 22px var(--panel-shadow); }
+@media (hover: hover) {
+  .price-card:has(.price-card-action:not(:disabled)):hover { transform: translateY(-2px); border-color: var(--interactive-accent); box-shadow: 0 8px 22px var(--panel-shadow); }
+}
 .price-card-heading { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .price-card-heading svg { width: 28px; height: 25px; }
 .price-card h3 { font-size: 1rem; font-weight: 650; }
-.price-value { font-size: 2.8rem; font-weight: 650; line-height: 1.35; margin-block: 8px 4px; }
+.price-value { font-size: 2.65rem; font-weight: 650; line-height: 1.35; margin-block: 10px 4px; font-variant-numeric: tabular-nums; }
 .price-unit { font-size: .88rem; }
 .prices-empty { text-align: center; min-height: 170px; display: grid; place-items: center; }
 
@@ -220,11 +253,19 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 .control-note { margin-block-start: 10px; font-size: .75rem; }
 /* Keep the readiness explanation's space when it disappears, including narrow English layouts. */
 .availability-note { min-height: 2lh; }
-.calculator-result { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 216px; padding: 20px; border-radius: 11px; }
+.weight-shortcuts { display: flex; flex-wrap: wrap; gap: 6px; }
+.weight-shortcuts button { min-width: 48px; min-height: 44px; padding: 5px 12px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--card-surface); color: var(--secondary-text); font-size: .8rem; }
+.weight-shortcuts button:hover { background: var(--secondary-surface); }
+.weight-shortcuts button[aria-pressed="true"] { color: var(--action-text); background: var(--action-background); }
+@media (min-width: 640px) {
+  .weight-shortcuts { grid-column: 2; grid-row: 2; }
+  .calculator-fields > .calculate-button { grid-column: 3; grid-row: 1; }
+}
+.calculator-result { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 216px; padding: 20px; border: 1px solid var(--theme-border); border-radius: 11px; }
 .result-icon { width: 40px; height: 40px; margin-block-end: 7px; }
 .calculator-result h3 { font-size: 1rem; font-weight: 650; }
 .result-divider { width: 86%; height: 1px; background: var(--color-taupe); opacity: .5; margin-block: 14px; }
-.result-value { font-size: 2rem; line-height: 1.4; max-width: 100%; overflow-wrap: anywhere; }
+.result-value { font-size: 2rem; line-height: 1.4; max-width: 100%; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
 .calculator-result > p:last-child { font-size: .88rem; }
 .calculation-details { width: 100%; margin-block-start: 14px; font-size: .8rem; }
 .calculation-details > div { display: flex; justify-content: space-between; gap: 12px; padding-block: 3px; }
@@ -248,6 +289,7 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 @keyframes trend-24 { from { opacity: .94; transform: translateY(2px); } to { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
+  .price-card, .price-card:has(.price-card-action:focus-visible), .price-card:has(.price-card-action:not(:disabled)):hover { transform: none; transition: none; }
   .calculator-empty-icon, .result-entrance,
   #trends[aria-busy="false"][data-transition] :is(.trend-stats, .trend-comparison, .trend-chart) {
     animation: none; transition: none;
@@ -267,7 +309,7 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 .trend-stats > div { padding-inline: 12px; }
 .trend-stats > div + div { border-inline-start: 1px solid var(--theme-border); }
 .trend-stats dt { font-size: .86rem; }
-.trend-stats dd { font-size: clamp(1.05rem, 4vw, 1.7rem); font-weight: 650; margin-block: 2px; }
+.trend-stats dd { font-size: clamp(1.05rem, 4vw, 1.7rem); font-weight: 650; margin-block: 2px; font-variant-numeric: tabular-nums; }
 .trend-stats span { font-size: .8rem; }
 .trend-comparison { margin-block-start: 24px; padding: 16px; border: 1px solid var(--theme-border); border-radius: 10px; background: color-mix(in srgb, var(--secondary-surface) 28%, var(--card-surface)); }
 .comparison-heading { font-size: .85rem; font-weight: 600; margin-block-end: 10px; }
@@ -282,6 +324,17 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 .chart-y-axis { position: relative; font-size: .75rem; font-variant-numeric: tabular-nums; }
 .chart-y-axis span { position: absolute; right: 0; transform: translateY(-50%); }
 .price-chart { width: 100%; height: 240px; min-width: 0; }
+.chart-plot { position: relative; min-width: 0; border-radius: 4px; }
+.chart-plot svg { cursor: crosshair; touch-action: pan-y; }
+.chart-selection-line { stroke: var(--interactive-accent); stroke-width: 1; stroke-dasharray: 4 4; }
+/* Pixel-sized HTML markers stay round even when the SVG scales non-uniformly. */
+.chart-marker { position: absolute; width: 12px; height: 12px; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+.chart-marker-selected { background: var(--interactive-accent); border: 2px solid var(--card-surface); box-shadow: 0 0 0 2px var(--interactive-accent); }
+.chart-marker-preview { background: var(--card-surface); border: 2px dashed var(--interactive-accent); }
+.chart-tooltip { position: absolute; pointer-events: none; top: 8px; width: min(220px, calc(100% - 16px)); left: clamp(8px, calc(var(--point-x) * 1% - 110px), max(8px, calc(100% - 228px))); padding: 8px 10px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--card-surface); color: var(--primary-text); box-shadow: 0 4px 14px var(--panel-shadow); font-size: .75rem; line-height: 1.6; text-align: start; overflow-wrap: anywhere; }
+.chart-tooltip.tooltip-below { top: auto; bottom: 8px; }
+.chart-tooltip > * { display: block; }
+.tooltip-state { font-size: .7rem; }
 .chart-grid { stroke: var(--theme-border); stroke-width: 1; opacity: .7; }
 .chart-line { fill: none; stroke: var(--interactive-accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 .chart-area { fill: var(--chart-fill); opacity: var(--chart-fill-opacity); }
@@ -301,7 +354,7 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 /* Semantic history table: only this container scrolls on small screens. */
 .history-scroll { overflow-x: auto; margin-block-start: 20px; border: 1px solid var(--theme-border); border-radius: 9px; }
 .history-scroll table { width: 100%; min-width: 660px; border-collapse: collapse; font-size: .9rem; }
-.history-scroll th, .history-scroll td { padding: 12px 18px; text-align: center; }
+.history-scroll th, .history-scroll td { padding: 10px 18px; text-align: center; font-variant-numeric: tabular-nums; }
 .history-scroll th { font-weight: 650; white-space: nowrap; }
 .history-scroll th:first-child { text-align: start; }
 .history-scroll tbody th { font-weight: 400; }
@@ -309,9 +362,13 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
 
 /* Footer */
 .site-footer { border-block-start: 1px solid var(--theme-border); }
-.footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-block: 22px; }
+.footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-block: 26px; }
 .footer-brand { font-size: 1.12rem; font-weight: 650; }
 .footer-inner > div > p:last-child, .copyright { font-size: .76rem; }
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .hero-artwork { background-position: 72% center; }
+}
 
 @media (max-width: 767px) {
   :root { --anchor-offset: 192px; }
@@ -323,16 +380,19 @@ app-header header { border-block-end: 1px solid var(--theme-border); }
   .brand-name { font-size: 1.18rem; }
   .header-nav { gap: 4px 20px; }
   .header-nav a { font-size: .8rem; }
-  .hero-inner { padding-block: 18px 22px; }
+  .hero-artwork { background-position: 84% center; }
+  :root[dir] .hero::after { background: var(--hero-shade); }
+  .hero-inner { display: flex; flex-direction: column; min-height: 480px; padding-block: 18px 22px; }
+  .hero-content { flex: 1; }
   .hero-copy { padding-block-start: 24px; }
   .hero-copy p { font-size: 1rem; }
-  .hero-details { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 0; margin-block-start: 8px; }
+  .hero-details { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 0; margin-block-start: auto; }
   .hero-details > div:nth-child(3) { border-inline-start: 0; }
   .hero-details > div { padding-inline: 10px; }
   .hero-details dt { font-size: .7rem; }
   .hero-details dd { font-size: .8rem; }
   .panel { padding: 20px 16px; }
-  .price-card { min-height: 155px; }
+  .price-card { min-height: 183px; padding-block-end: 48px; }
   .section-heading { gap: 10px; }
   .section-heading h2 { font-size: 1.25rem; }
   .section-heading p { font-size: .8rem; }

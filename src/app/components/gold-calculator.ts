@@ -1,4 +1,5 @@
-import { Component, inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, ElementRef, inject, viewChild } from '@angular/core';
 import { GoldPurity } from '../models/gold-price';
 import { GoldPriceService } from '../services/gold-price.service';
 import { LanguageService } from '../services/language.service';
@@ -14,7 +15,7 @@ interface GoldCalculation {
   selector: 'app-gold-calculator',
   standalone: true,
   template: `
-    <section id="calculator" class="panel bg-card" aria-labelledby="calculator-title">
+    <section #calculatorSection id="calculator" class="panel bg-card" aria-labelledby="calculator-title">
       <div class="calculator-layout grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-8">
         <div>
           <div class="section-heading">
@@ -38,7 +39,12 @@ interface GoldCalculation {
             </div>
             <div class="field-group">
               <label for="gold-weight">{{ lang.t('weightLabel') }}</label>
-              <input #weightField id="gold-weight" name="gold-weight" class="field bg-card text-primary" type="number" inputmode="decimal" min="0" step="any" required [placeholder]="lang.t('weightPlaceholder')" aria-describedby="calculator-note calculator-error" [attr.aria-invalid]="error ? 'true' : null" (input)="clearResult()" />
+              <input #weightField id="gold-weight" name="gold-weight" class="field bg-card text-primary" type="number" inputmode="decimal" min="0" step="any" required [placeholder]="lang.t('weightPlaceholder')" aria-describedby="calculator-note calculator-error" [attr.aria-invalid]="error ? 'true' : null" (input)="weightChanged(weightField)" />
+            </div>
+            <div class="weight-shortcuts" role="group" [attr.aria-label]="lang.t('weightShortcuts')">
+              @for (weight of weightShortcuts; track weight) {
+                <button type="button" [attr.data-weight]="weight" [attr.aria-pressed]="weightGrams === weight" [attr.aria-label]="lang.t('setWeight', { weight: lang.number(weight) })" (click)="setWeight(weight, weightField)">{{ lang.t('weightShortcut', { weight: lang.number(weight) }) }}</button>
+              }
             </div>
             <button class="calculate-button" type="submit" [disabled]="!canCalculate" aria-describedby="calculator-availability calculator-note">{{ lang.t('calculate') }}</button>
           </form>
@@ -74,15 +80,38 @@ interface GoldCalculation {
   `,
 })
 export class GoldCalculator {
+  private readonly document = inject(DOCUMENT);
+  private readonly section = viewChild.required<ElementRef<HTMLElement>>('calculatorSection');
+  private readonly purityField = viewChild.required<ElementRef<HTMLSelectElement>>('purityField');
   protected readonly goldPrices = inject(GoldPriceService);
   protected readonly lang = inject(LanguageService);
   readonly purities = this.goldPrices.purities;
   selectedPurity: GoldPurity = 24;
+  readonly weightShortcuts = [1, 5, 10, 20];
+  weightGrams: number | null = null;
   result: GoldCalculation | null = null;
   private errorKey: 'invalidWeight' | 'overflowingTotal' | null = null;
 
   get error(): string { return this.errorKey ? this.lang.t(this.errorKey) : ''; }
   get canCalculate(): boolean { return !this.goldPrices.loading() && this.goldPrices.latest !== null; }
+
+  usePrice(selection: { purity: GoldPurity; keyboard: boolean }): void {
+    if (!this.canCalculate) return;
+    this.changePurity(String(selection.purity));
+    const reduce = this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    this.section().nativeElement.scrollIntoView({ behavior: reduce ? 'instant' : 'smooth', block: 'start' });
+    if (selection.keyboard) this.purityField().nativeElement.focus({ preventScroll: true });
+  }
+
+  weightChanged(field: HTMLInputElement): void {
+    this.weightGrams = Number.isFinite(field.valueAsNumber) ? field.valueAsNumber : null;
+    this.clearResult();
+  }
+
+  setWeight(weight: number, field: HTMLInputElement): void {
+    field.value = String(weight);
+    this.weightChanged(field);
+  }
 
   changePurity(value: string): void {
     const purity = this.purities.find(purity => String(purity) === value);

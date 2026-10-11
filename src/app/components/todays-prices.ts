@@ -1,4 +1,5 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, output } from '@angular/core';
+import { GoldPurity } from '../models/gold-price';
 import { PriceCard } from './price-card';
 import { GoldPriceService } from '../services/gold-price.service';
 import { LanguageService } from '../services/language.service';
@@ -14,7 +15,7 @@ import { LanguageService } from '../services/language.service';
       @if (goldPrices.loading() || goldPrices.latest) {
         <div class="price-grid grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-4 gap-4">
           @for (purity of displayedPurities; track purity) {
-            <app-price-card [purity]="purity" [price]="goldPrices.latest?.prices?.[purity] ?? null" [loading]="goldPrices.loading()" />
+            <app-price-card [purity]="purity" [price]="goldPrices.latest?.prices?.[purity] ?? null" [loading]="goldPrices.loading()" (useInCalculator)="useInCalculator.emit($event)" />
           }
         </div>
       } @else {
@@ -24,6 +25,7 @@ import { LanguageService } from '../services/language.service';
   `,
 })
 export class TodaysPrices {
+  readonly useInCalculator = output<{ purity: GoldPurity; keyboard: boolean }>();
   protected readonly goldPrices = inject(GoldPriceService);
   protected readonly lang = inject(LanguageService);
   protected readonly displayedPurities = [24, 22, 21, 18] as const;

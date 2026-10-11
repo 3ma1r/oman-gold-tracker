@@ -1,6 +1,16 @@
 export type Language = 'ar' | 'en';
 
 const ar = {
+  useInCalculator: 'استخدم في الحاسبة',
+  weightShortcuts: 'أوزان سريعة',
+  weightShortcut: '{weight} غ',
+  setWeight: 'استخدم وزن {weight} غرام',
+  chartInteraction: 'رسم أسعار تفاعلي',
+  chartInstructions: 'انقر أو المس الرسم لاختيار يوم. استخدم الأسهم للتنقل بين الأيام، وHome وEnd للطرفين، وEscape لمسح الاختيار. التواريخ من اليسار إلى اليمين.',
+  chartPreview: 'معاينة مؤقتة',
+  chartSelected: 'اليوم المحدد',
+  chartSelectionValue: '{date}، {purity}، {price} {unit}.',
+  chartSelectionCleared: 'تم مسح اليوم المحدد.',
   documentTitle: 'الذهب العُماني | أسعار الذهب في عُمان',
   siteName: 'الذهب العُماني',
   siteCaption: 'أسعار الذهب في سلطنة عُمان',
@@ -26,6 +36,7 @@ const ar = {
   pricesEmpty: 'لا توجد بيانات أسعار تجريبية متاحة.',
   calculatorUnavailable: 'الحاسبة غير متاحة لعدم وجود أسعار تجريبية.',
   sampleDate: 'تاريخ البيانات التجريبية',
+  lastDataUpdate: 'آخر تحديث للبيانات',
   market: 'السوق',
   oman: 'سلطنة عُمان',
   currency: 'العملة',
@@ -89,6 +100,16 @@ export type TranslationKey = keyof typeof ar;
 export type TranslationDictionary = Readonly<Record<TranslationKey, string>>;
 
 const en = {
+  useInCalculator: 'Use in calculator',
+  weightShortcuts: 'Quick weights',
+  weightShortcut: '{weight} g',
+  setWeight: 'Use a weight of {weight} grams',
+  chartInteraction: 'Interactive price chart',
+  chartInstructions: 'Click or tap the plot to select a day. Use arrow keys to move through dates, Home and End for endpoints, and Escape to clear. Dates run left to right.',
+  chartPreview: 'Hover preview',
+  chartSelected: 'Selected day',
+  chartSelectionValue: '{date}, {purity}, {price} {unit}.',
+  chartSelectionCleared: 'Selected day cleared.',
   documentTitle: 'Omani Gold | Gold prices in Oman',
   siteName: 'Omani Gold',
   siteCaption: 'Gold prices in the Sultanate of Oman',
@@ -114,6 +135,7 @@ const en = {
   pricesEmpty: 'No sample price data is available.',
   calculatorUnavailable: 'The calculator is unavailable because there are no sample prices.',
   sampleDate: 'Sample-data date',
+  lastDataUpdate: 'Last data update',
   market: 'Market',
   oman: 'Sultanate of Oman',
   currency: 'Currency',

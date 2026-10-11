@@ -4,8 +4,8 @@
   <app-hero />
   <div class="page-shell page-sections">
     <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ lang.t(goldPrices.loading() ? 'sampleLoading' : goldPrices.days.length ? 'sampleReady' : 'pricesEmpty') }}</p>
-    <app-todays-prices />
-    <app-gold-calculator />
+    <app-todays-prices (useInCalculator)="calculator.usePrice($event)" />
+    <app-gold-calculator #calculator />
     <app-price-trend />
     <app-price-history />
   </div>

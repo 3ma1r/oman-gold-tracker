@@ -86,6 +86,8 @@ describe('Dashboard language switching', () => {
       expect(element.querySelector('.hero-copy p')?.textContent).toBe(text.heroDescription);
       expect(element.querySelector('.sample-badge')?.textContent).toContain(text.sampleData);
       expect(element.querySelector('app-hero time')?.textContent).toBe(language.date(prices.sampleDate!));
+      expect(element.querySelector('.hero-details dt')?.textContent).toBe(text.lastDataUpdate);
+      expect(element.querySelector('.hero-details > div:last-child dd')?.textContent).toBe(text.rialPerGram);
       expect(element.querySelector('.price-data-note')?.textContent).toContain(text.samplePricesAfterDate);
       expect(element.querySelector('#calculator-title')?.textContent).toBe(text.calculator);
       expect(element.querySelector('label[for="gold-purity"]')?.textContent).toBe(text.purityLabel);

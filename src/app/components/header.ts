@@ -1,4 +1,5 @@
-import { Component, inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { afterNextRender, Component, DestroyRef, ElementRef, inject, signal } from '@angular/core';
 import { LanguageService } from '../services/language.service';
 import { ThemeService } from '../services/theme.service';
 
@@ -19,10 +20,10 @@ import { ThemeService } from '../services/theme.service';
           </span>
         </a>
         <nav class="header-nav" [attr.aria-label]="lang.t('mainNavigation')">
-          <a href="#home">{{ lang.t('home') }}</a>
-          <a href="#prices">{{ lang.t('prices') }}</a>
-          <a href="#calculator">{{ lang.t('calculator') }}</a>
-          <a href="#trends">{{ lang.t('trends') }}</a>
+          <a href="#home" [attr.aria-current]="activeSection() === 'home' ? 'location' : null">{{ lang.t('home') }}</a>
+          <a href="#prices" [attr.aria-current]="activeSection() === 'prices' ? 'location' : null">{{ lang.t('prices') }}</a>
+          <a href="#calculator" [attr.aria-current]="activeSection() === 'calculator' ? 'location' : null">{{ lang.t('calculator') }}</a>
+          <a href="#trends" [attr.aria-current]="activeSection() === 'trends' ? 'location' : null">{{ lang.t('trends') }}</a>
         </nav>
         <div class="header-controls">
           <button class="language-button bg-card text-primary" type="button" [attr.lang]="lang.language() === 'ar' ? 'en' : 'ar'" [attr.dir]="lang.language() === 'ar' ? 'ltr' : 'rtl'" [attr.aria-label]="lang.t('languageButtonName')" (click)="lang.toggle()">{{ lang.t('languageButton') }}</button>
@@ -45,4 +46,42 @@ import { ThemeService } from '../services/theme.service';
 export class Header {
   protected readonly lang = inject(LanguageService);
   protected readonly theme = inject(ThemeService);
+  readonly activeSection = signal<string | null>('home');
+
+  constructor() {
+    const document = inject(DOCUMENT);
+    const element = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+    const destroy = inject(DestroyRef);
+    afterNextRender(() => {
+      const window = document.defaultView;
+      if (!window) return;
+      let frame: number | null = null;
+      // Section rectangles, at most once per animation frame. Unlike a fixed
+      // observer margin, this also follows a wrapped/resized bilingual header.
+      const update = () => {
+        frame = null;
+        const anchorOffset = Number.parseFloat(window.getComputedStyle(document.documentElement).getPropertyValue('--anchor-offset')) || 0;
+        const top = Math.max(element.getBoundingClientRect().bottom + 16, anchorOffset + 1);
+        const sections = ['home', 'prices', 'calculator', 'trends', 'history']
+          .map(id => document.getElementById(id)).filter((section): section is HTMLElement => !!section);
+        const section = sections.find(section => {
+          const rect = section.getBoundingClientRect();
+          return rect.bottom > top && rect.top < window.innerHeight;
+        });
+        this.activeSection.set(section?.id === 'history' ? null : section?.id ?? null);
+      };
+      const schedule = () => { if (frame === null) frame = window.requestAnimationFrame(update); };
+      window.addEventListener('scroll', schedule, { passive: true });
+      window.addEventListener('resize', schedule);
+      const observer = new ResizeObserver(schedule);
+      observer.observe(element);
+      schedule();
+      destroy.onDestroy(() => {
+        window.removeEventListener('scroll', schedule);
+        window.removeEventListener('resize', schedule);
+        observer.disconnect();
+        if (frame !== null) window.cancelAnimationFrame(frame);
+      });
+    });
+  }
 }
