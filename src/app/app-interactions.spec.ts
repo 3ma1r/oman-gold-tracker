@@ -119,13 +119,12 @@ describe('Dashboard interactions', () => {
     }
   });
 
-  it('keeps the assignment sample-data badge visible and translated in the sticky header', () => {
+  it('omits the header sample-data badge but keeps the hero badge in both languages', () => {
     const lang = TestBed.inject(LanguageService);
     for (const language of ['ar', 'en'] as const) {
       lang.setLanguage(language); fixture.detectChanges();
-      const badge = element.querySelector('app-header .header-sample-badge')!;
-      expect(badge.textContent).toBe(lang.t('sampleData'));
-      expect(getComputedStyle(badge).display).not.toBe('none');
+      expect(element.querySelector('app-header .header-sample-badge')).toBeNull();
+      expect(element.querySelector('.hero-copy .sample-badge')?.textContent).toContain(lang.t('sampleData'));
     }
   });
 

@@ -10,13 +10,6 @@ import { LanguageService } from '../services/language.service';
       <div class="hero-artwork" aria-hidden="true"></div>
       <div class="page-shell hero-inner">
         <div class="hero-content">
-        <nav class="breadcrumb" [attr.aria-label]="lang.t('breadcrumb')">
-          <ol>
-            <li><a href="#home">{{ lang.t('home') }}</a></li>
-            <li aria-hidden="true">{{ lang.language() === 'ar' ? '‹' : '›' }}</li>
-            <li aria-current="page">{{ lang.t('heroTitle') }}</li>
-          </ol>
-        </nav>
         <div class="hero-copy">
           <h1 id="hero-title">{{ lang.t('heroTitle') }}</h1>
           <p>{{ lang.t('heroDescription') }}</p>

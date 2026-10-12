@@ -81,7 +81,7 @@ describe('Dashboard language switching', () => {
       expect(element.querySelector('.brand')?.getAttribute('aria-label')).toBe(text.brandHome);
       expect(element.querySelector('.header-nav')?.getAttribute('aria-label')).toBe(text.mainNavigation);
       expect(element.querySelector('.header-nav a[href="#prices"]')?.textContent).toBe(text.prices);
-      expect(element.querySelector('.breadcrumb')?.getAttribute('aria-label')).toBe(text.breadcrumb);
+      expect(element.querySelector('.breadcrumb')).toBeNull();
       expect(element.querySelector('h1')?.textContent).toBe(text.heroTitle);
       expect(element.querySelector('.hero-copy p')?.textContent).toBe(text.heroDescription);
       expect(element.querySelector('.sample-badge')?.textContent).toContain(text.sampleData);

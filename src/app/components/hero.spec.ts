@@ -55,11 +55,9 @@ describe('Production hero artwork', () => {
       expect(getComputedStyle(element.querySelector('.hero-content')!).filter).toBe('none');
       const details = element.querySelector('.hero-details')!.getBoundingClientRect();
       const copy = element.querySelector('.hero-copy')!.getBoundingClientRect();
-      const breadcrumb = element.querySelector('.breadcrumb')!.getBoundingClientRect();
+      expect(element.querySelector('.breadcrumb')).toBeNull();
       expect(copy.left).toBeCloseTo(details.left, 1);
       expect(copy.right).toBeCloseTo(details.right, 1);
-      expect(breadcrumb.left).toBeCloseTo(details.left, 1);
-      expect(breadcrumb.right).toBeCloseTo(details.right, 1);
       // CSS backgrounds are decorative: no image/accessibility role replaces the semantic text.
       expect(element.querySelector('img, [role="img"]')).toBeNull();
     }
