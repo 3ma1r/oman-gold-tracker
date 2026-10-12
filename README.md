@@ -118,22 +118,15 @@ A single **450ms simulated delay** on initial page load demonstrates loading loc
 
 ## Main controls
 
-- **Navigation:** use the sticky header's Home, Prices, Gold calculator, and Price trend links. The chart also links to the detailed history table.
-- **Price cards:** click/tap a card or activate its button with Enter/Space to select its purity and scroll to the calculator. Keyboard activation focuses the purity selector. Weight is preserved; stale results/errors are cleared without calculating.
-- **Calculator:** select a purity and enter a positive decimal weight, or use a weight shortcut. Press Calculate or submit with Enter. Changing either input clears the previous result/error; shortcuts never submit automatically.
-- **Chart:** select a purity (24K initially). Click/tap the plot to select the nearest date; mouse/pen hover temporarily previews another point. Tooltips show localized dates, purity, and prices. Focus the chart and use Right/Up to move forward, Left/Down backward, Home/End for endpoints, and Escape to clear selection. Keyboard values are announced; pointer movements are not. The selected date survives purity changes. Dates always run oldest-to-newest from left to right, including in Arabic.
-- **Language/theme:** use the header buttons. Defaults are Arabic and light mode. Available storage restores preferences on reload; switching preserves calculator and chart state during the session. Inputs, results, and chart selections are not saved across reloads.
+- **Navigation:** use the sticky header links to move between sections and access the price history from the chart.
+- **Price cards:** click/tap a card or press Enter/Space to select its purity and move to the calculator.
+- **Calculator:** choose a purity, enter a positive weight or use a shortcut, then press Calculate or Enter.
+- **Chart:** switch purity and hover, click, or tap to explore daily prices. Use arrow keys to navigate, Home/End for endpoints, and Escape to clear selection.
+- **Language/theme:** switch Arabic/English and light/dark mode using the header buttons. Preferences are saved for your next visit.
 
-## Assets and provenance
+## Assets
 
-The Oman scenery and gold-coins hero artwork was **AI-generated for this project** and is included at `public/images/oman-gold-hero.png`. It is a decorative CSS background with a warm fallback and background-only blur; text and market information remain real HTML.
+Hero artwork is included at public/images/oman-gold-hero.png. Branding, interface icons, and the chart use SVG, with no external icon libraries or remote images required.
 
-The header's mountain-shaped brand mark is inline SVG; `public/favicon.svg` reuses its geometry. Interface icons are inline SVG paths, and the chart is native SVG. No external icon pack or remote runtime image is required. No external asset licence or third-party attribution is asserted.
 
-## Verification and limitations
 
-On **12 October 2026**, the production build succeeded and **all 131 tests passed** in ChromeHeadless. Tests cover dataset dates/rounding/consistency, calculator validation, chart selection and edge cases, loading, unavailable storage, preference switching, and responsive layouts.
-
-Desktop Chrome screenshot reviews during development covered Arabic/English and light/dark at **320, 390, 768, and 1440px**, including artwork cropping, alignment, tooltips, focus, and overflow. The current revision was rechecked with the full automated suite, including responsive layout tests; no fresh manual visual review was performed during documentation.
-
-Physical-device, real screen-reader, cross-browser, and formal accessibility-conformance testing have not been performed. No dedicated end-to-end framework or deployment configuration is included. The `npm ci` workflow was checked against the lockfile but not rerun during documentation review, preserving the existing installation.
