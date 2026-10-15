@@ -1,6 +1,43 @@
 @GoldPriceTracker.Api_HostAddress = http://localhost:5118
 
-GET {{GoldPriceTracker.Api_HostAddress}}/weatherforecast/
+# Latest sample prices for all four purities (200)
+GET {{GoldPriceTracker.Api_HostAddress}}/api/gold-prices
 Accept: application/json
+
+###
+
+# Complete 30-day sample history, oldest first (200)
+GET {{GoldPriceTracker.Api_HostAddress}}/api/gold-prices/history
+Accept: application/json
+
+###
+
+# Latest 18K sample price (200)
+GET {{GoldPriceTracker.Api_HostAddress}}/api/gold-prices/18
+Accept: application/json
+
+###
+
+# Latest 21K sample price (200)
+GET {{GoldPriceTracker.Api_HostAddress}}/api/gold-prices/21
+Accept: application/json
+
+###
+
+# Latest 22K sample price (200)
+GET {{GoldPriceTracker.Api_HostAddress}}/api/gold-prices/22
+Accept: application/json
+
+###
+
+# Latest 24K sample price (200)
+GET {{GoldPriceTracker.Api_HostAddress}}/api/gold-prices/24
+Accept: application/json
+
+###
+
+# Unsupported purity (404 ProblemDetails)
+GET {{GoldPriceTracker.Api_HostAddress}}/api/gold-prices/19
+Accept: application/problem+json
 
 ###
