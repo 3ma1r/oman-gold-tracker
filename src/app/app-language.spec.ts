@@ -226,6 +226,16 @@ describe('Dashboard language switching', () => {
             expect(frame.contentWindow!.getComputedStyle(frameDocument.documentElement).colorScheme).withContext(context).toBe(mode);
             const offset = parseFloat(frame.contentWindow!.getComputedStyle(frameDocument.documentElement).getPropertyValue('--anchor-offset'));
             expect(rect('app-header').height).withContext(`${context}: sticky anchor clearance`).toBeLessThanOrEqual(offset);
+            if (width < 1024) {
+              const nav = frameDocument.querySelector<HTMLElement>('.header-nav')!;
+              expect(frame.contentWindow!.getComputedStyle(nav).display).withContext(`${context}: menu initially hidden`).toBe('none');
+              nav.classList.add('menu-open');
+              const expandedOffset = parseFloat(frame.contentWindow!.getComputedStyle(frameDocument.documentElement).getPropertyValue('--anchor-offset'));
+              expect(frame.contentWindow!.getComputedStyle(nav).display).withContext(`${context}: menu expanded`).toBe('grid');
+              expect(rect('app-header').height).withContext(`${context}: expanded menu anchor clearance`).toBeLessThan(expandedOffset);
+              expect(frameDocument.documentElement.scrollWidth).withContext(`${context}: expanded menu overflow`).toBeLessThanOrEqual(width);
+              nav.classList.remove('menu-open');
+            }
             const inputs = rect('.calculator-layout > div:first-child');
             const result = rect('.calculator-result');
             if (width >= 1024) {

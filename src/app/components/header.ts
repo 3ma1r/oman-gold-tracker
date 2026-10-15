@@ -1,15 +1,16 @@
 import { DOCUMENT } from '@angular/common';
-import { afterNextRender, Component, DestroyRef, ElementRef, inject, signal } from '@angular/core';
+import { afterNextRender, ChangeDetectorRef, Component, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { LanguageService } from '../services/language.service';
 import { ThemeService } from '../services/theme.service';
 
 @Component({
   selector: 'app-header',
   standalone: true,
+  host: { '(document:keydown.escape)': 'closeMenu(true)' },
   template: `
     <header class="bg-card text-primary">
       <div class="page-shell header-inner">
-        <a class="brand" href="#home" [attr.aria-label]="lang.t('brandHome')">
+        <a class="brand" href="#home" [attr.aria-label]="lang.t('brandHome')" (click)="closeMenu()">
           <svg class="brand-mark text-gold" viewBox="0 0 64 48" fill="none" aria-hidden="true">
             <path d="M3 41 18 23c3-4 6-4 10 0l5 5 8-20c2-5 5-5 8 0l12 27-15-14-6 13-10-6-8 1L3 41Z" fill="currentColor" />
             <path d="M20 29c12 1 13 15 31 16-9-5-12-18-22-22" fill="currentColor" />
@@ -19,12 +20,6 @@ import { ThemeService } from '../services/theme.service';
             <span class="brand-caption text-muted">{{ lang.t('siteCaption') }}</span>
           </span>
         </a>
-        <nav class="header-nav" [attr.aria-label]="lang.t('mainNavigation')">
-          <a href="#home" [attr.aria-current]="activeSection() === 'home' ? 'location' : null">{{ lang.t('home') }}</a>
-          <a href="#prices" [attr.aria-current]="activeSection() === 'prices' ? 'location' : null">{{ lang.t('prices') }}</a>
-          <a href="#calculator" [attr.aria-current]="activeSection() === 'calculator' ? 'location' : null">{{ lang.t('calculator') }}</a>
-          <a href="#trends" [attr.aria-current]="activeSection() === 'trends' ? 'location' : null">{{ lang.t('trends') }}</a>
-        </nav>
         <div class="header-controls">
           <button class="language-button bg-card text-primary" type="button" [attr.lang]="lang.language() === 'ar' ? 'en' : 'ar'" [attr.dir]="lang.language() === 'ar' ? 'ltr' : 'rtl'" [attr.aria-label]="lang.t('languageButtonName')" (click)="lang.toggle()">{{ lang.t('languageButton') }}</button>
           <button class="theme-button bg-card text-primary" type="button" [attr.aria-label]="lang.t(theme.theme() === 'light' ? 'switchToDark' : 'switchToLight')" [title]="lang.t(theme.theme() === 'light' ? 'switchToDark' : 'switchToLight')" (click)="theme.toggle()">
@@ -38,7 +33,22 @@ import { ThemeService } from '../services/theme.service';
             </svg>
             <span class="sr-only">{{ lang.t(theme.theme() === 'light' ? 'switchToDark' : 'switchToLight') }}</span>
           </button>
+          <button #menuButton class="menu-button bg-card text-primary" type="button" aria-controls="header-navigation" [attr.aria-expanded]="menuOpen()" [attr.aria-label]="lang.t(menuOpen() ? 'closeMenu' : 'openMenu')" (click)="menuOpen.set(!menuOpen())">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false">
+              @if (menuOpen()) {
+                <path d="m6 6 12 12M6 18 18 6" />
+              } @else {
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              }
+            </svg>
+          </button>
         </div>
+        <nav id="header-navigation" class="header-nav" [class.menu-open]="menuOpen()" [attr.aria-label]="lang.t('mainNavigation')">
+          <a href="#home" (click)="closeMenu()" [attr.aria-current]="activeSection() === 'home' ? 'location' : null">{{ lang.t('home') }}</a>
+          <a href="#prices" (click)="closeMenu()" [attr.aria-current]="activeSection() === 'prices' ? 'location' : null">{{ lang.t('prices') }}</a>
+          <a href="#calculator" (click)="closeMenu()" [attr.aria-current]="activeSection() === 'calculator' ? 'location' : null">{{ lang.t('calculator') }}</a>
+          <a href="#trends" (click)="closeMenu()" [attr.aria-current]="activeSection() === 'trends' ? 'location' : null">{{ lang.t('trends') }}</a>
+        </nav>
       </div>
     </header>
   `,
@@ -47,6 +57,18 @@ export class Header {
   protected readonly lang = inject(LanguageService);
   protected readonly theme = inject(ThemeService);
   readonly activeSection = signal<string | null>('home');
+  readonly menuOpen = signal(false);
+  private readonly menuButton = viewChild<ElementRef<HTMLButtonElement>>('menuButton');
+  private readonly changeDetector = inject(ChangeDetectorRef);
+
+  closeMenu(restoreFocus = false): void {
+    if (!this.menuOpen()) return;
+    this.menuOpen.set(false);
+    // Native anchor scrolling reads scroll-margin before Angular's usual event render.
+    // Collapse now so it uses the closed header's clearance, not the expanded menu's.
+    this.changeDetector.detectChanges();
+    if (restoreFocus) this.menuButton()?.nativeElement.focus({ preventScroll: true });
+  }
 
   constructor() {
     const document = inject(DOCUMENT);
@@ -57,7 +79,7 @@ export class Header {
       if (!window) return;
       let frame: number | null = null;
       // Section rectangles, at most once per animation frame. Unlike a fixed
-      // observer margin, this also follows a wrapped/resized bilingual header.
+      // observer margin, this also follows the resized bilingual header/menu.
       const update = () => {
         frame = null;
         const anchorOffset = Number.parseFloat(window.getComputedStyle(document.documentElement).getPropertyValue('--anchor-offset')) || 0;
@@ -71,6 +93,9 @@ export class Header {
         this.activeSection.set(section?.id === 'history' ? null : section?.id ?? null);
       };
       const schedule = () => { if (frame === null) frame = window.requestAnimationFrame(update); };
+      const desktop = window.matchMedia('(min-width: 1024px)');
+      const closeOnDesktop = () => { if (desktop.matches) this.closeMenu(); };
+      desktop.addEventListener('change', closeOnDesktop);
       window.addEventListener('scroll', schedule, { passive: true });
       window.addEventListener('resize', schedule);
       const observer = new ResizeObserver(schedule);
@@ -80,6 +105,7 @@ export class Header {
         window.removeEventListener('scroll', schedule);
         window.removeEventListener('resize', schedule);
         observer.disconnect();
+        desktop.removeEventListener('change', closeOnDesktop);
         if (frame !== null) window.cancelAnimationFrame(frame);
       });
     });

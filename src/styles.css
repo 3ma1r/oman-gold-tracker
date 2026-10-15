@@ -141,15 +141,16 @@ app-header header { border-block-end: 1px solid var(--theme-border); box-shadow:
 .brand-name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 1.4rem; font-weight: 750; line-height: 1.4; }
 .brand-caption { display: block; font-size: .7rem; margin-block-start: 4px; }
 .header-sample-badge { border-radius: 999px; padding-inline: 7px; font-size: .65rem; font-weight: 500; line-height: 1.7; white-space: nowrap; }
-.header-nav { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; justify-content: center; min-width: 0; }
+.header-nav { grid-column: 2; grid-row: 1; display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: center; justify-content: center; min-width: 0; }
 .header-nav a { padding-block: 6px; font-size: .94rem; font-weight: 550; border-block-end: 2px solid transparent; }
 .header-nav a:hover, .header-nav a[aria-current="location"] { color: var(--interactive-accent); border-block-end-color: var(--gold-accent); }
-.header-controls { display: flex; align-items: center; gap: 8px; }
-.language-button, .theme-button { min-height: 44px; border: 1px solid var(--control-border); border-radius: 9px; font-size: .85rem; }
+.header-controls { grid-column: 3; grid-row: 1; display: flex; align-items: center; gap: 8px; }
+.language-button, .theme-button, .menu-button { min-height: 44px; border: 1px solid var(--control-border); border-radius: 9px; font-size: .85rem; }
 .language-button { padding: 8px 14px; }
-.theme-button { display: grid; place-items: center; min-width: 44px; padding: 9px; }
-.theme-button svg { width: 22px; height: 22px; }
-.language-button:hover:not(:disabled), .theme-button:hover:not(:disabled) { background: var(--secondary-surface); }
+.theme-button, .menu-button { display: grid; place-items: center; min-width: 44px; padding: 9px; }
+.theme-button svg, .menu-button svg { width: 22px; height: 22px; }
+.menu-button { display: none; }
+.language-button:hover:not(:disabled), .theme-button:hover:not(:disabled), .menu-button:hover { background: var(--secondary-surface); }
 
 /* Original local artwork: never mirrored or stretched. The last layer is its warm fallback. */
 .hero {
@@ -368,31 +369,43 @@ app-header header { border-block-end: 1px solid var(--theme-border); box-shadow:
 .footer-brand { font-size: 1.12rem; font-weight: 650; }
 .footer-inner > div > p:last-child, .copyright { font-size: .76rem; }
 
-@media (min-width: 768px) and (max-width: 1023px) {
-  .hero-artwork { background-position: 72% center; }
+/* Compact navigation and a complete panorama on phones/tablets. Desktop is unchanged. */
+@media (max-width: 1023px) {
+  :root { --anchor-offset: 88px; }
+  /* Also clear the two 44px menu rows if a price card is used while it stays open. */
+  :root:has(.header-nav.menu-open) { --anchor-offset: 200px; }
+  .header-inner { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding-block: 10px; }
+  .header-controls { grid-column: 2; grid-row: 1; gap: 6px; }
+  .brand { gap: 6px; min-height: 44px; }
+  .brand-mark { width: 28px; height: 30px; }
+  .brand-name { font-size: .95rem; }
+  .brand-caption { display: none; }
+  .language-button { padding-inline: 8px; }
+  .menu-button { display: grid; }
+  .header-nav { display: none; grid-column: 1 / -1; grid-row: 2; }
+  .header-nav.menu-open { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; padding-block-start: 8px; border-block-start: 1px solid var(--theme-border); }
+  .header-nav a { display: flex; align-items: center; min-height: 44px; padding: 8px; font-size: .85rem; }
+
+  .hero { color: var(--primary-text); background-color: var(--page-background); }
+  /* The slightly extended 3:1 layer shows the whole original composition, not a tall cover crop. */
+  .hero-artwork { position: relative; inset: auto; width: calc(100% + 8px); margin-inline: -4px; aspect-ratio: 3 / 1; background-position: center; }
+  :root[dir] .hero::after { bottom: auto; aspect-ratio: 3 / 1; background: color-mix(in srgb, var(--color-espresso) 8%, transparent); }
+  .hero-inner { min-height: 0; padding-block: 18px 22px; }
+  .hero-content { width: 100%; }
+  .hero-copy { flex: none; padding-block: 0; }
+  .hero h1 { color: var(--primary-text); font-size: clamp(1.65rem, 4.5vw, 2.4rem); line-height: 1.4; }
+  .hero-copy p { color: var(--secondary-text); font-size: .95rem; line-height: 1.8; margin-block: 8px 12px; }
+  .hero :focus-visible { outline-color: var(--focus-ring); }
+  .hero-details { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 0; margin-block-start: 18px; background: var(--card-surface); color: var(--primary-text); border-color: var(--theme-border); backdrop-filter: none; }
+  .hero-details > div:nth-child(3) { border-inline-start: 0; }
+  .hero-details > div + div { border-color: var(--theme-border); }
+  .hero-details > div { padding-inline: 10px; }
+  .hero-details dt { font-size: .72rem; color: var(--secondary-text); }
+  .hero-details dd { font-size: .8rem; }
 }
 
 @media (max-width: 767px) {
-  :root { --anchor-offset: 192px; }
   .page-shell { width: calc(100% - 32px); }
-  .header-inner { grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding-block: 12px; }
-  .header-nav { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; }
-  .header-controls { grid-column: 2; grid-row: 1; }
-  .brand-mark { width: 48px; height: 37px; }
-  .brand-name { font-size: 1.18rem; }
-  .header-nav { gap: 4px 20px; }
-  .header-nav a { font-size: .8rem; }
-  .hero-artwork { background-position: 84% center; }
-  :root[dir] .hero::after { background: var(--hero-shade); }
-  .hero-inner { display: flex; flex-direction: column; min-height: 480px; padding-block: 18px 22px; }
-  .hero-content { flex: 1; }
-  .hero-copy { padding-block-start: 24px; }
-  .hero-copy p { font-size: 1rem; }
-  .hero-details { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 0; margin-block-start: auto; }
-  .hero-details > div:nth-child(3) { border-inline-start: 0; }
-  .hero-details > div { padding-inline: 10px; }
-  .hero-details dt { font-size: .7rem; }
-  .hero-details dd { font-size: .8rem; }
   .panel { padding: 20px 16px; }
   .price-card { min-height: 183px; padding-block-end: 48px; }
   .section-heading { gap: 10px; }
@@ -411,12 +424,4 @@ app-header header { border-block-end: 1px solid var(--theme-border); box-shadow:
   .chart-y-axis, .chart-dates { font-size: .7rem; }
   .price-chart { height: 210px; }
   .footer-inner { flex-direction: column; align-items: flex-start; gap: 12px; }
-}
-
-@media (max-width: 479px) {
-  :root { --anchor-offset: 216px; }
-  /* Give the bilingual brand its own row; navigation wraps beside the controls. */
-  .brand { grid-column: 1 / -1; }
-  .header-nav { grid-column: 1; grid-row: 2; }
-  .header-controls { grid-column: 2; grid-row: 2; }
 }

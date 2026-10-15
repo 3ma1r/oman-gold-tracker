@@ -128,6 +128,74 @@ describe('Dashboard interactions', () => {
     }
   });
 
+  it('starts with a closed menu and translates its accessible toggle without losing active navigation', () => {
+    const lang = TestBed.inject(LanguageService);
+    const button = element.querySelector<HTMLButtonElement>('.menu-button')!;
+    const nav = element.querySelector<HTMLElement>('.header-nav')!;
+    expect(button.type).toBe('button');
+    expect(button.getAttribute('aria-controls')).toBe(nav.id);
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+    expect(nav.classList.contains('menu-open')).toBeFalse();
+    for (const language of ['ar', 'en'] as const) {
+      lang.setLanguage(language); fixture.detectChanges();
+      expect(button.getAttribute('aria-label')).toBe(lang.t('openMenu'));
+      button.click(); fixture.detectChanges();
+      expect(button.getAttribute('aria-expanded')).toBe('true');
+      expect(button.getAttribute('aria-label')).toBe(lang.t('closeMenu'));
+      expect(nav.classList.contains('menu-open')).toBeTrue();
+      expect(nav.querySelector('[aria-current="location"]')?.getAttribute('href')).toBe('#home');
+      button.click(); fixture.detectChanges();
+    }
+  });
+
+  it('closes the menu on each section link without preventing native anchor navigation', () => {
+    const button = element.querySelector<HTMLButtonElement>('.menu-button')!;
+    for (const link of element.querySelectorAll<HTMLAnchorElement>('.header-nav a')) {
+      button.click(); fixture.detectChanges();
+      const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+      // Do not scroll the test runner; separately verify our handler did not prevent default.
+      let prevented = true;
+      let collapsedBeforeDefault = false;
+      link.addEventListener('click', e => {
+        prevented = e.defaultPrevented;
+        collapsedBeforeDefault = button.getAttribute('aria-expanded') === 'false'
+          && !element.querySelector('.header-nav')!.classList.contains('menu-open');
+        e.preventDefault();
+      }, { once: true });
+      link.dispatchEvent(event); fixture.detectChanges();
+      expect(prevented).toBeFalse();
+      expect(collapsedBeforeDefault).toBeTrue();
+      expect(button.getAttribute('aria-expanded')).toBe('false');
+      expect(link.getAttribute('href')).toMatch(/^#(home|prices|calculator|trends)$/);
+    }
+  });
+
+  it('closes with Escape and restores menu-button focus only when the menu was open', () => {
+    const button = element.querySelector<HTMLButtonElement>('.menu-button')!;
+    const focus = spyOn(button, 'focus');
+    button.click(); fixture.detectChanges();
+    // Escape also closes after focus has moved outside the expanded navigation.
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    expect(button.getAttribute('aria-expanded')).toBe('false');
+    expect(focus).toHaveBeenCalledOnceWith({ preventScroll: true });
+    button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves an open menu and application state while switching language and theme', () => {
+    enter('2.5'); submit();
+    const result = calculator.result;
+    const button = element.querySelector<HTMLButtonElement>('.menu-button')!;
+    button.click(); fixture.detectChanges();
+    element.querySelector<HTMLButtonElement>('.language-button')!.click();
+    element.querySelector<HTMLButtonElement>('.theme-button')!.click(); fixture.detectChanges();
+    expect(button.getAttribute('aria-expanded')).toBe('true');
+    expect(button.getAttribute('aria-label')).toBe(TestBed.inject(LanguageService).t('closeMenu'));
+    expect(weight.value).toBe('2.5');
+    expect(calculator.result).toBe(result);
+  });
+
   it('tracks scrolling at the sticky anchor boundary and removes its native listeners', async () => {
     const frame = () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
     await frame(); await frame();

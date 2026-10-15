@@ -226,11 +226,16 @@ describe('Dashboard theme switching', () => {
       const line = element.querySelector('.chart-line')!;
       expect(contrast(rgba(getComputedStyle(line).stroke), background(line)))
         .withContext(`${mode}: chart line`).toBeGreaterThanOrEqual(3);
-      // Bound the hero gradient by its brightest endpoint, before and after its radial highlight.
+      // Compact hero text is below the artwork; desktop text remains over its shaded gradient.
       const heroText = rgba(getComputedStyle(element.querySelector('.hero h1')!).color);
-      for (const start of [token('--hero-start'), composite(token('--hero-highlight'), token('--hero-start'))]) {
-        expect(contrast(heroText, composite(token('--hero-shade'), start)))
-          .withContext(`${mode}: hero gradient text`).toBeGreaterThanOrEqual(4.5);
+      if (window.matchMedia('(max-width: 1023px)').matches) {
+        expect(contrast(heroText, background(element.querySelector('.hero h1')!)))
+          .withContext(`${mode}: mobile hero text surface`).toBeGreaterThanOrEqual(4.5);
+      } else {
+        for (const start of [token('--hero-start'), composite(token('--hero-highlight'), token('--hero-start'))]) {
+          expect(contrast(heroText, composite(token('--hero-shade'), start)))
+            .withContext(`${mode}: hero gradient text`).toBeGreaterThanOrEqual(4.5);
+        }
       }
     }
   });
