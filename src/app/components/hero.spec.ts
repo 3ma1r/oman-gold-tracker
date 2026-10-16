@@ -1,7 +1,8 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed } from '@angular/core/testing';
 import { Hero } from './hero';
 import { TRANSLATIONS } from '../data/translations';
-import { GoldPriceService, SAMPLE_LOADING_DELAY_MS } from '../services/gold-price.service';
+import { GoldPriceService } from '../services/gold-price.service';
+import { flushGoldPriceResponses, provideGoldPriceHttpTesting } from '../testing/gold-price-http';
 import { LanguageService } from '../services/language.service';
 import { ThemeService } from '../services/theme.service';
 
@@ -15,7 +16,7 @@ describe('Production hero artwork', () => {
     };
     spyOn(Storage.prototype, 'getItem').and.returnValue(null);
     spyOn(Storage.prototype, 'setItem');
-    await TestBed.configureTestingModule({ imports: [Hero] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [Hero], providers: provideGoldPriceHttpTesting() }).compileComponents();
   });
 
   afterEach(() => {
@@ -31,7 +32,7 @@ describe('Production hero artwork', () => {
     const language = TestBed.inject(LanguageService);
     const theme = TestBed.inject(ThemeService);
     const fixture = TestBed.createComponent(Hero);
-    tick(SAMPLE_LOADING_DELAY_MS);
+    flushGoldPriceResponses();
     for (const selection of ['ar', 'en'] as const) for (const mode of ['light', 'dark'] as const) {
       language.setLanguage(selection);
       theme.setTheme(mode);

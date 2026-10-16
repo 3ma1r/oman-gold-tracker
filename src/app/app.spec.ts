@@ -1,6 +1,7 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { App } from './app';
-import { GoldPriceService, SAMPLE_LOADING_DELAY_MS } from './services/gold-price.service';
+import { GoldPriceService } from './services/gold-price.service';
+import { flushGoldPriceResponses, provideGoldPriceHttpTesting } from './testing/gold-price-http';
 import { formatNumber, formatPrice, formatSampleDate } from './services/gold-price-format';
 
 describe('App', () => {
@@ -8,8 +9,9 @@ describe('App', () => {
     spyOn(Storage.prototype, 'getItem').and.returnValue(null);
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: provideGoldPriceHttpTesting(),
     }).compileComponents();
-    fakeAsync(() => { TestBed.inject(GoldPriceService); tick(SAMPLE_LOADING_DELAY_MS); })();
+    flushGoldPriceResponses();
   });
 
   it('should create the app', () => {

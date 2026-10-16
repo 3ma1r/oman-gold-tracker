@@ -1,10 +1,11 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { App } from './app';
 import { GoldCalculator } from './components/gold-calculator';
 import { PriceTrend } from './components/price-trend';
 import { Language, TRANSLATIONS } from './data/translations';
-import { GoldPriceService, SAMPLE_LOADING_DELAY_MS } from './services/gold-price.service';
+import { GoldPriceService } from './services/gold-price.service';
+import { flushGoldPriceResponses, provideGoldPriceHttpTesting } from './testing/gold-price-http';
 import { LanguageService } from './services/language.service';
 import { ThemeService } from './services/theme.service';
 
@@ -22,8 +23,8 @@ describe('Dashboard language switching', () => {
     };
     spyOn(Storage.prototype, 'getItem').and.returnValue(null);
     spyOn(Storage.prototype, 'setItem');
-    await TestBed.configureTestingModule({ imports: [App] }).compileComponents();
-    fakeAsync(() => { TestBed.inject(GoldPriceService); tick(SAMPLE_LOADING_DELAY_MS); })();
+    await TestBed.configureTestingModule({ imports: [App], providers: provideGoldPriceHttpTesting() }).compileComponents();
+    flushGoldPriceResponses();
     fixture = TestBed.createComponent(App);
     element = fixture.nativeElement;
     language = TestBed.inject(LanguageService);

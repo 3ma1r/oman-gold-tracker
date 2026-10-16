@@ -1,6 +1,7 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GoldCalculator } from './gold-calculator';
-import { GoldPriceService, SAMPLE_LOADING_DELAY_MS } from '../services/gold-price.service';
+import { GoldPriceService } from '../services/gold-price.service';
+import { flushGoldPriceResponses, provideGoldPriceHttpTesting } from '../testing/gold-price-http';
 import { formatNumber, formatPrice } from '../services/gold-price-format';
 
 describe('GoldCalculator', () => {
@@ -14,8 +15,8 @@ describe('GoldCalculator', () => {
 
   beforeEach(async () => {
     spyOn(Storage.prototype, 'getItem').and.returnValue(null);
-    await TestBed.configureTestingModule({ imports: [GoldCalculator] }).compileComponents();
-    fakeAsync(() => { TestBed.inject(GoldPriceService); tick(SAMPLE_LOADING_DELAY_MS); })();
+    await TestBed.configureTestingModule({ imports: [GoldCalculator], providers: provideGoldPriceHttpTesting() }).compileComponents();
+    flushGoldPriceResponses();
     fixture = TestBed.createComponent(GoldCalculator);
     component = fixture.componentInstance;
     element = fixture.nativeElement;

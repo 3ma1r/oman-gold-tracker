@@ -1,9 +1,10 @@
 import { signal } from '@angular/core';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { PriceTrend } from './price-trend';
 import { buildPriceTrend, CHART_HEIGHT, CHART_WIDTH } from './price-trend-chart';
-import { GoldPriceService, SAMPLE_LOADING_DELAY_MS } from '../services/gold-price.service';
-import { SAMPLE_GOLD_PRICES } from '../data/sample-gold-prices';
+import { GoldPriceService } from '../services/gold-price.service';
+import { SAMPLE_GOLD_PRICES } from '../testing/sample-gold-prices.fixture';
+import { flushGoldPriceResponses, provideGoldPriceHttpTesting } from '../testing/gold-price-http';
 import { DailyGoldPrice, DateOnly, GOLD_PURITIES } from '../models/gold-price';
 import { formatNumber, formatPercentage, formatPrice, formatSampleDate } from '../services/gold-price-format';
 import { LanguageService } from '../services/language.service';
@@ -124,14 +125,14 @@ describe('Price trend geometry and comparisons', () => {
 describe('PriceTrend', () => {
   beforeEach(async () => {
     spyOn(Storage.prototype, 'getItem').and.returnValue(null);
-    await TestBed.configureTestingModule({ imports: [PriceTrend] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [PriceTrend], providers: provideGoldPriceHttpTesting() }).compileComponents();
   });
 
   function render(days?: readonly DailyGoldPrice[]) {
     if (days) {
       TestBed.overrideProvider(GoldPriceService, { useValue: { days, purities: GOLD_PURITIES, loading: signal(false) } });
     }
-    fakeAsync(() => { TestBed.inject(GoldPriceService); tick(SAMPLE_LOADING_DELAY_MS); })();
+    if (!days) flushGoldPriceResponses();
     const fixture = TestBed.createComponent(PriceTrend);
     fixture.detectChanges();
     return { fixture, component: fixture.componentInstance, element: fixture.nativeElement as HTMLElement };

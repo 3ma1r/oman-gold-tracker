@@ -14,7 +14,7 @@ import { LanguageService } from '../services/language.service';
         </svg>
         <div>
           <h2 id="history-title">{{ lang.t('history') }}</h2>
-          <p class="text-muted">{{ lang.t('historyDescription', { count: lang.number(goldPrices.history.length) }) }}</p>
+          <p class="text-muted">{{ lang.t('historyDescription', { count: lang.number(goldPrices.loading() ? skeletonRows.length : goldPrices.history.length) }) }}</p>
         </div>
       </div>
       <div class="history-scroll" tabindex="0" role="region" [attr.aria-label]="lang.t('historyRegion')">
@@ -29,23 +29,28 @@ import { LanguageService } from '../services/language.service';
             </tr>
           </thead>
           <tbody>
-            @for (day of goldPrices.history; track day.date) {
-              <tr [attr.aria-hidden]="goldPrices.loading() ? 'true' : null">
-                <th scope="row">
-                  @if (goldPrices.loading()) { <span class="skeleton skeleton-text skeleton-date" aria-hidden="true">{{ lang.date(day.date) }}</span> }
-                  @else { <time [attr.datetime]="day.date">{{ lang.date(day.date) }}</time> }
-                </th>
-                @for (purity of historyPurities; track purity) {
-                  <td>
-                    @if (goldPrices.loading()) { <span class="skeleton skeleton-text skeleton-cell" aria-hidden="true"><bdi>{{ lang.price(day.prices[purity]) }}</bdi></span> }
-                    @else { <bdi>{{ lang.price(day.prices[purity]) }}</bdi> }
-                  </td>
-                }
-              </tr>
-            } @empty {
-              @if (goldPrices.loading()) {
-                <tr aria-hidden="true"><td colspan="5"><span class="skeleton skeleton-cell" aria-hidden="true"></span></td></tr>
-              } @else {
+            @if (goldPrices.loading()) {
+              @for (row of skeletonRows; track row) {
+                <tr aria-hidden="true">
+                  <th scope="row"><span class="skeleton skeleton-text" aria-hidden="true">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</span></th>
+                  @for (purity of historyPurities; track purity) {
+                    <td><span class="skeleton skeleton-text" aria-hidden="true">&#160;&#160;&#160;&#160;&#160;&#160;</span></td>
+                  }
+                </tr>
+              }
+            } @else {
+              @for (day of goldPrices.history; track day.date) {
+                <tr>
+                  <th scope="row">
+                    <time [attr.datetime]="day.date">{{ lang.date(day.date) }}</time>
+                  </th>
+                  @for (purity of historyPurities; track purity) {
+                    <td>
+                      <bdi>{{ lang.price(day.prices[purity]) }}</bdi>
+                    </td>
+                  }
+                </tr>
+              } @empty {
                 <tr><td colspan="5">{{ lang.t('historyEmpty') }}</td></tr>
               }
             }
@@ -59,5 +64,6 @@ export class PriceHistory {
   protected readonly goldPrices = inject(GoldPriceService);
   protected readonly lang = inject(LanguageService);
   protected readonly historyPurities = [24, 22, 21, 18] as const;
+  protected readonly skeletonRows = Array.from({ length: 30 }, (_, index) => index);
   protected readonly formatPurity = (purity: (typeof this.historyPurities)[number]) => this.lang.purity(purity);
 }

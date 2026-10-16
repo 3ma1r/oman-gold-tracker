@@ -1,10 +1,11 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { App } from './app';
 import { GoldCalculator } from './components/gold-calculator';
 import { PriceTrend } from './components/price-trend';
 import { TRANSLATIONS } from './data/translations';
-import { GoldPriceService, SAMPLE_LOADING_DELAY_MS } from './services/gold-price.service';
+import { GoldPriceService } from './services/gold-price.service';
+import { flushGoldPriceResponses, provideGoldPriceHttpTesting } from './testing/gold-price-http';
 import { LANGUAGE_STORAGE_KEY, LanguageService } from './services/language.service';
 import { THEME_STORAGE_KEY, ThemeService } from './services/theme.service';
 
@@ -24,7 +25,7 @@ describe('Dashboard theme switching', () => {
     stored = new Map();
     spyOn(Storage.prototype, 'getItem').and.callFake((key: string) => stored.get(key) ?? null);
     spyOn(Storage.prototype, 'setItem').and.callFake((key: string, value: string) => stored.set(key, value));
-    await TestBed.configureTestingModule({ imports: [App] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [App], providers: provideGoldPriceHttpTesting() }).compileComponents();
   });
 
   afterEach(() => {
@@ -36,7 +37,7 @@ describe('Dashboard theme switching', () => {
   });
 
   function render(): void {
-    fakeAsync(() => { TestBed.inject(GoldPriceService); tick(SAMPLE_LOADING_DELAY_MS); })();
+    flushGoldPriceResponses();
     fixture = TestBed.createComponent(App);
     element = fixture.nativeElement;
     theme = TestBed.inject(ThemeService);

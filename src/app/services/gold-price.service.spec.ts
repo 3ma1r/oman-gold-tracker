@@ -1,136 +1,134 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { GoldPriceService, SAMPLE_LOADING_DELAY_MS } from './gold-price.service';
-import { SAMPLE_FINAL_DATE, SAMPLE_GOLD_PRICES } from '../data/sample-gold-prices';
-import { formatSampleDate } from './gold-price-format';
+import { API_BASE_URL } from '../api.config';
+import { GOLD_PURITIES } from '../models/gold-price';
+import { goldPriceResponses, provideGoldPriceHttpTesting, TEST_API_BASE_URL } from '../testing/gold-price-http';
+import { SAMPLE_GOLD_PRICES } from '../testing/sample-gold-prices.fixture';
+import { GoldPriceService, PRICE_LOAD_TIMEOUT_MS } from './gold-price.service';
 
-describe('GoldPriceService', () => {
-  let service: GoldPriceService;
-
+describe('GoldPriceService shared API loading', () => {
+  let http: HttpTestingController;
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(GoldPriceService);
+    TestBed.configureTestingModule({ providers: provideGoldPriceHttpTesting() });
+    http = TestBed.inject(HttpTestingController);
   });
+  afterEach(() => http.verify());
 
-  it('supports exactly the four specified purities', () => {
-    expect(service.purities).toEqual([18, 21, 22, 24]);
-    for (const day of service.days) {
-      expect(Object.keys(day.prices).map(Number)).toEqual([18, 21, 22, 24]);
-    }
-  });
+  function start() {
+    const service = TestBed.inject(GoldPriceService);
+    const latest = http.expectOne(`${TEST_API_BASE_URL}/api/gold-prices`);
+    const history = http.expectOne(`${TEST_API_BASE_URL}/api/gold-prices/history`);
+    return { service, latest, history };
+  }
+  function expectNoData(service: GoldPriceService) {
+    expect(service.days).toEqual([]); expect(service.history).toEqual([]);
+    expect(service.latest).toBeNull(); expect(service.sampleDate).toBeNull();
+  }
+  function expectFailed(service: GoldPriceService) {
+    expect(service.loading()).toBeFalse(); expect(service.failed()).toBeTrue(); expectNoData(service);
+  }
 
-  it('has exactly 30 unique consecutive Gregorian dates with fixed endpoints', () => {
-    expect(service.days.length).toBe(30);
-    expect(new Set(service.days.map(day => day.date)).size).toBe(30);
-    expect(service.days[0].date).toBe('2025-03-29');
-    expect(service.days[29].date).toBe('2025-04-27');
-    expect(SAMPLE_FINAL_DATE).toBe('2025-04-27');
-
-    for (const [index, day] of service.days.entries()) {
-      expect(day.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      const expected = new Date(Date.UTC(2025, 2, 29 + index)).toISOString().slice(0, 10);
-      expect(day.date).toBe(expected);
-    }
-  });
-
-  it('uses the same immutable records for chronological data, history and latest prices', () => {
-    expect(service.days).toBe(SAMPLE_GOLD_PRICES);
-    expect(service.history.length).toBe(30);
-    expect(service.latest).toBe(service.days[29]);
-    expect(service.history[0]).toBe(service.latest!);
-    expect(service.sampleDate).toBe(service.latest!.date);
-    expect(Object.isFrozen(service.days)).toBeTrue();
-    expect(Object.isFrozen(service.history)).toBeTrue();
-
-    for (const [index, day] of service.history.entries()) {
-      expect(day).toBe(service.days[29 - index]);
-      expect(Object.isFrozen(day)).toBeTrue();
-      expect(Object.isFrozen(day.prices)).toBeTrue();
-    }
-  });
-
-  it('stores positive numeric prices with no precision beyond three decimals', () => {
-    for (const day of service.days) {
-      for (const purity of service.purities) {
-        const price = day.prices[purity];
-        expect(typeof price).toBe('number');
-        expect(Number.isFinite(price)).toBeTrue();
-        expect(price).toBeGreaterThan(0);
-        expect(price * 1000).toBeCloseTo(Math.round(price * 1000), 8);
-      }
-    }
-  });
-
-  it('derives every purity from 24K with exact half-up rounding to one baisa', () => {
-    for (const day of service.days) {
-      const baisa24K = BigInt(Math.round(day.prices[24] * 1000));
-      for (const purity of service.purities) {
-        // Independent integer oracle: add half the denominator before division.
-        const expectedBaisa = (baisa24K * BigInt(purity) + 12n) / 24n;
-        expect(day.prices[purity]).toBe(Number(expectedBaisa) / 1000);
-      }
-    }
-    // Exercise half-baisa boundaries as well as non-tie rounding.
-    expect(service.days[5].prices[18]).toBe(35.987); // 47.982 * 18/24 = 35.9865
-    expect(service.days[7].prices[18]).toBe(36.203); // 48.270 * 18/24 = 36.2025
-    expect(service.days[1].prices[21]).toBe(41.147);
-  });
-
-  it('has fixed final prices for all four purities', () => {
-    expect(service.latest!.prices).toEqual({
-      18: 38.400,
-      21: 44.800,
-      22: 46.933,
-      24: 51.200,
+  for (const first of ['latest', 'history'] as const) {
+    it(`publishes nothing until both responses succeed, with ${first} completing first`, () => {
+      const state = start();
+      const replies = goldPriceResponses();
+      expect(state.service.loading()).toBeTrue(); expect(state.service.failed()).toBeFalse();
+      expectNoData(state.service);
+      state[first].flush(replies[first]);
+      expect(state.service.loading()).toBeTrue(); expectNoData(state.service);
+      const second = first === 'latest' ? 'history' : 'latest';
+      state[second].flush(replies[second]);
+      expect(state.service.loading()).toBeFalse(); expect(state.service.failed()).toBeFalse();
+      expect(state.service.days).toEqual(SAMPLE_GOLD_PRICES);
+      expect(state.service.purities).toEqual(GOLD_PURITIES);
+      expect(state.service.sampleDate).toBe(replies.latest.date);
+      expect(state.service.latest).toBe(state.service.days[29]);
+      expect(state.service.history[0]).toBe(state.service.latest!);
+      expect(state.service.history.map(day => day.date)).toEqual([...SAMPLE_GOLD_PRICES].reverse().map(day => day.date));
+      expect(state.service.latest!.prices).toEqual(replies.latest.prices);
+      expect(Object.isFrozen(state.service.days)).toBeTrue();
+      expect(Object.isFrozen(state.service.history)).toBeTrue();
+      expect(state.service.days.every(day => Object.isFrozen(day) && Object.isFrozen(day.prices))).toBeTrue();
     });
+  }
+
+  it('shares one pair of requests between all consumers without a separate purity request', () => {
+    const state = start();
+    expect(TestBed.inject(GoldPriceService)).toBe(state.service);
+    http.expectNone(() => true);
+    const replies = goldPriceResponses(); state.latest.flush(replies.latest); state.history.flush(replies.history);
+    for (const purity of GOLD_PURITIES) expect(state.service.latest!.prices[purity]).toBe(replies.latest.prices[purity]);
+    http.expectNone(() => true);
   });
 
-  it('keeps the sample date and prices independent of the current clock', () => {
-    jasmine.clock().install();
-    try {
-      jasmine.clock().mockDate(new Date('2035-01-01T00:00:00Z'));
-      const anotherService = TestBed.runInInjectionContext(() => new GoldPriceService());
-      expect(anotherService.days).toBe(service.days);
-      expect(anotherService.sampleDate).toBe('2025-04-27');
-      expect(anotherService.latest!.prices[24]).toBe(51.200);
-    } finally {
-      jasmine.clock().uninstall();
-    }
-  });
+  for (const endpoint of ['latest', 'history'] as const) {
+    it(`discards the other successful response when ${endpoint} fails`, () => {
+      const state = start(); const replies = goldPriceResponses();
+      const other = endpoint === 'latest' ? 'history' : 'latest';
+      state[other].flush(replies[other]); expectNoData(state.service);
+      state[endpoint].flush({ title: 'Unavailable' }, { status: 503, statusText: 'Service Unavailable' });
+      expectFailed(state.service);
+    });
+    it(`handles ${endpoint} network errors and cancels the pending sibling`, () => {
+      const state = start();
+      state[endpoint].error(new ProgressEvent('error'));
+      expectFailed(state.service);
+      expect(state[endpoint === 'latest' ? 'history' : 'latest'].cancelled).toBeTrue();
+    });
+  }
 
-  it('formats calendar parts directly, including month boundaries and leap days', () => {
-    expect(formatSampleDate('2025-03-29')).toBe('٢٩ مارس ٢٠٢٥');
-    expect(formatSampleDate('2025-04-01')).toBe('١ أبريل ٢٠٢٥');
-    expect(formatSampleDate(service.sampleDate!)).toBe('٢٧ أبريل ٢٠٢٥');
-    expect(formatSampleDate('2024-02-29')).toBe('٢٩ فبراير ٢٠٢٤');
-    expect(formatSampleDate('2025-12-31')).toBe('٣١ ديسمبر ٢٠٢٥');
-  });
-});
+  for (const purity of GOLD_PURITIES) {
+    it(`rejects a mismatching ${purity}K latest price without partial publication`, () => {
+      const state = start(); const replies = goldPriceResponses();
+      state.latest.flush({ ...replies.latest, prices: { ...replies.latest.prices, [purity]: replies.latest.prices[purity] + 1 } });
+      state.history.flush(replies.history); expectFailed(state.service);
+    });
+  }
 
-describe('GoldPriceService initial loading', () => {
-  it('becomes ready after exactly one short delay without changing the local records', fakeAsync(() => {
-    const timers = spyOn(window, 'setTimeout').and.callThrough();
-    const service = TestBed.inject(GoldPriceService);
-    const data = service.days;
-    const latest = service.latest;
-    expect(service.loading()).toBeTrue();
-    tick(SAMPLE_LOADING_DELAY_MS - 1);
-    expect(service.loading()).toBeTrue();
-    tick(1);
-    expect(service.loading()).toBeFalse();
-    expect(TestBed.inject(GoldPriceService)).toBe(service);
-    tick(SAMPLE_LOADING_DELAY_MS * 3);
-    expect(service.loading()).toBeFalse();
-    expect(service.days).toBe(data);
-    expect(service.latest).toBe(latest);
-    expect(timers.calls.allArgs().filter(args => args[1] === SAMPLE_LOADING_DELAY_MS).length).toBe(1);
+  const valid = goldPriceResponses();
+  const invalidCases = [
+    { name: 'different latest date', latest: { ...valid.latest, date: '2030-01-01' }, history: valid.history },
+    { name: 'wrong date range', latest: valid.latest, history: { ...valid.history, endDate: '2025-04-28' } },
+    { name: 'reversed dates', latest: valid.latest, history: { ...valid.history, days: [...valid.history.days].reverse() } },
+    { name: 'duplicate dates', latest: valid.latest, history: { ...valid.history, days: [valid.history.days[1], ...valid.history.days.slice(1)] } },
+    { name: 'invalid calendar date', latest: { ...valid.latest, date: '2025-02-30' }, history: valid.history },
+    { name: 'non-date-only value', latest: { ...valid.latest, date: '2025-04-27T00:00:00Z' }, history: valid.history },
+    { name: 'empty history', latest: valid.latest, history: { ...valid.history, days: [] } },
+    { name: 'missing days', latest: valid.latest, history: {} },
+    { name: 'wrong currency', latest: { ...valid.latest, currency: 'USD' }, history: valid.history },
+    { name: 'wrong unit', latest: valid.latest, history: { ...valid.history, unit: 'ounce' } },
+    { name: 'unlabelled samples', latest: { ...valid.latest, isSampleData: false }, history: valid.history },
+    { name: 'missing purity', latest: { ...valid.latest, prices: { 24: 51.2 } }, history: valid.history },
+    { name: 'formatted price string', latest: { ...valid.latest, prices: { ...valid.latest.prices, 24: '51.200' } }, history: valid.history },
+    { name: 'non-finite price', latest: { ...valid.latest, prices: { ...valid.latest.prices, 24: Infinity } }, history: valid.history },
+    { name: 'invalid history price', latest: valid.latest, history: { ...valid.history, days: valid.history.days.map((day, i) => i ? day : { ...day, prices: { ...day.prices, 18: null } }) } },
+    { name: 'null response', latest: null, history: valid.history },
+  ];
+  for (const invalid of invalidCases) {
+    it(`rejects ${invalid.name} as a handled failure`, () => {
+      const state = start(); state.latest.flush(invalid.latest); state.history.flush(invalid.history);
+      expectFailed(state.service);
+    });
+  }
+
+  it('ends loading and cancels requests at the deadline if the API stalls', fakeAsync(() => {
+    const state = start();
+    tick(PRICE_LOAD_TIMEOUT_MS - 1); expect(state.service.loading()).toBeTrue();
+    tick(1); expectFailed(state.service);
+    expect(state.latest.cancelled && state.history.cancelled).toBeTrue();
   }));
 
-  it('cancels a pending initial timer when its injector is destroyed', fakeAsync(() => {
-    const service = TestBed.inject(GoldPriceService);
-    const clear = spyOn(window, 'clearTimeout').and.callThrough();
+  it('cancels in-flight HTTP requests when destroyed', fakeAsync(() => {
+    const state = start(); TestBed.resetTestingModule();
+    expect(state.latest.cancelled && state.history.cancelled).toBeTrue();
+    tick(PRICE_LOAD_TIMEOUT_MS);
+  }));
+
+  it('handles missing production API configuration without fallback or unhandled errors', () => {
     TestBed.resetTestingModule();
-    expect(clear).toHaveBeenCalled();
-    tick(SAMPLE_LOADING_DELAY_MS);
-    expect(service.loading()).toBeTrue();
-  }));
+    TestBed.configureTestingModule({ providers: [...provideGoldPriceHttpTesting(), { provide: API_BASE_URL, useValue: null }] });
+    http = TestBed.inject(HttpTestingController);
+    expectFailed(TestBed.inject(GoldPriceService));
+    http.expectNone(() => true);
+  });
 });

@@ -4,7 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
 import { GoldPriceHistoryResponse, GoldPriceResponse, LatestGoldPricesResponse } from '../models/gold-price-api';
 
-/** Opt-in HTTP access only. The dashboard's existing local data service remains unchanged. */
+/** Typed HTTP transport; shared loading and validation belong to GoldPriceService. */
 @Injectable({ providedIn: 'root' })
 export class GoldPriceApiService {
   private readonly http = inject(HttpClient);
