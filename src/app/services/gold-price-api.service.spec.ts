@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
-import { SAMPLE_GOLD_PRICES } from '../data/sample-gold-prices';
+import { SAMPLE_GOLD_PRICES } from '../testing/sample-gold-prices.fixture';
 import { GOLD_PURITIES } from '../models/gold-price';
 import { ApiProblemDetails, GoldPriceHistoryResponse, GoldPriceResponse, LatestGoldPricesResponse } from '../models/gold-price-api';
 import { GoldPriceApiService } from './gold-price-api.service';

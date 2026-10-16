@@ -17,7 +17,7 @@ import { buildPriceTrend, CHART_HEIGHT, CHART_WIDTH } from './price-trend-chart'
             </svg>
             <div>
               <h2 id="trends-title">{{ lang.t('trends') }}</h2>
-              <p class="text-muted">{{ lang.t('trendDescription', { count: lang.number(trend().series.length) }) }}</p>
+              <p class="text-muted">{{ lang.t('trendDescription', { count: lang.number(goldPrices.loading() ? 30 : trend().series.length) }) }}</p>
             </div>
           </div>
           <div class="purity-tabs" role="group" [attr.aria-label]="lang.t('chartPurity')">

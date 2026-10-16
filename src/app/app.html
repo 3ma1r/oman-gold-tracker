@@ -3,7 +3,10 @@
 <main id="main-content" tabindex="-1">
   <app-hero />
   <div class="page-shell page-sections">
-    <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ lang.t(goldPrices.loading() ? 'sampleLoading' : goldPrices.days.length ? 'sampleReady' : 'pricesEmpty') }}</p>
+    <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ goldPrices.failed() ? '' : lang.t(goldPrices.loading() ? 'sampleLoading' : goldPrices.days.length ? 'sampleReady' : 'pricesEmpty') }}</p>
+    @if (goldPrices.failed()) {
+      <p class="panel bg-card text-primary" role="alert">{{ lang.t('pricesLoadFailed') }}</p>
+    }
     <app-todays-prices (useInCalculator)="calculator.usePrice($event)" />
     <app-gold-calculator #calculator />
     <app-price-trend />

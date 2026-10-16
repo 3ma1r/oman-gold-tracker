@@ -1,6 +1,6 @@
 import { DailyGoldPrice, DateOnly } from '../models/gold-price';
 
-// Fictional, fixed sample data. These dates and prices never follow the system clock.
+// Test-only fixtures. Runtime prices and dates must come from the API.
 export const SAMPLE_FINAL_DATE = '2025-04-27' satisfies DateOnly;
 
 // The only stored price series: 24K, in OMR per gram, oldest first.

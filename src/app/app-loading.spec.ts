@@ -1,12 +1,14 @@
 import { signal } from '@angular/core';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { HttpTestingController } from '@angular/common/http/testing';
+import { fakeAsync, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { App } from './app';
 import { GoldCalculator } from './components/gold-calculator';
 import { PriceTrend } from './components/price-trend';
 import { TRANSLATIONS } from './data/translations';
 import { GOLD_PURITIES } from './models/gold-price';
-import { GoldPriceService, SAMPLE_LOADING_DELAY_MS } from './services/gold-price.service';
+import { GoldPriceService } from './services/gold-price.service';
+import { flushGoldPriceResponses, goldPriceResponses, provideGoldPriceHttpTesting, TEST_API_BASE_URL } from './testing/gold-price-http';
 import { LanguageService } from './services/language.service';
 import { ThemeService } from './services/theme.service';
 
@@ -20,10 +22,11 @@ describe('Dashboard loading and motion', () => {
     };
     spyOn(Storage.prototype, 'getItem').and.returnValue(null);
     spyOn(Storage.prototype, 'setItem');
-    await TestBed.configureTestingModule({ imports: [App] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [App], providers: provideGoldPriceHttpTesting() }).compileComponents();
   });
 
   afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
     document.documentElement.lang = original.lang;
     document.documentElement.dir = original.dir;
     document.title = original.title;
@@ -56,10 +59,13 @@ describe('Dashboard loading and motion', () => {
     expect(element.querySelectorAll('[aria-busy="true"]').length).toBe(4);
     element.querySelectorAll('.skeleton').forEach(node => expect(node.getAttribute('aria-hidden')).toBe('true'));
     expect(element.querySelector('.chart-empty, .prices-empty')).toBeNull();
-    tick(SAMPLE_LOADING_DELAY_MS - 1);
+    const http = TestBed.inject(HttpTestingController);
+    const latest = http.expectOne(`${TEST_API_BASE_URL}/api/gold-prices`);
+    const history = http.expectOne(`${TEST_API_BASE_URL}/api/gold-prices/history`);
+    latest.flush(goldPriceResponses().latest);
     fixture.detectChanges();
     expect(element.querySelector('.skeleton-price')).not.toBeNull();
-    tick(1);
+    history.flush(goldPriceResponses().history);
     fixture.detectChanges();
     expect(element.querySelector('.skeleton')).toBeNull();
     expect(element.querySelector('[aria-busy="true"]')).toBeNull();
@@ -92,7 +98,7 @@ describe('Dashboard loading and motion', () => {
     expect(calculator.result).toBeNull();
     expect(calculator.error).toBe('');
     expect(element.querySelector('.result-value')?.textContent).toBe('—');
-    tick(SAMPLE_LOADING_DELAY_MS);
+    flushGoldPriceResponses();
     fixture.detectChanges();
     expect(button.disabled).toBeFalse();
     expect(input.value).toBe('2.5');
@@ -104,14 +110,12 @@ describe('Dashboard loading and motion', () => {
     expect(element.querySelector('.result-value')?.classList.contains('result-entrance')).toBeTrue();
   }));
 
-  it('translates loading immediately and never restarts the delay for purity, language or theme changes', fakeAsync(() => {
-    const timers = spyOn(window, 'setTimeout').and.callThrough();
+  it('translates loading immediately and never refetches for purity, language or theme changes', fakeAsync(() => {
     const { fixture, element } = render();
     const prices = TestBed.inject(GoldPriceService);
     const language = TestBed.inject(LanguageService);
     const theme = TestBed.inject(ThemeService);
     const chart = fixture.debugElement.query(By.directive(PriceTrend)).componentInstance as PriceTrend;
-    tick(SAMPLE_LOADING_DELAY_MS - 1);
     language.setLanguage('en');
     theme.setTheme('dark');
     element.querySelector<HTMLButtonElement>('[data-purity="18"]')!.click();
@@ -119,7 +123,7 @@ describe('Dashboard loading and motion', () => {
     expect(prices.loading()).toBeTrue();
     expect(element.querySelector('.page-sections > [role="status"]')?.textContent).toBe(TRANSLATIONS.en.sampleLoading);
     expect(element.querySelector('#calculator-availability')?.textContent).toBe(TRANSLATIONS.en.calculatorLoading);
-    tick(1);
+    flushGoldPriceResponses();
     fixture.detectChanges();
     expect(prices.loading()).toBeFalse();
     expect(chart.selectedPurity()).toBe(18);
@@ -135,13 +139,13 @@ describe('Dashboard loading and motion', () => {
       expect(element.querySelector('polyline')?.getAttribute('points')).toBe(chart.trend().line);
       expect(element.querySelector('svg desc')?.textContent).toBe(chart.chartDescription());
     }
-    expect(timers.calls.allArgs().filter(args => args[1] === SAMPLE_LOADING_DELAY_MS).length).toBe(1);
+    TestBed.inject(HttpTestingController).expectNone(() => true);
   }));
 
   it('distinguishes genuinely empty records from loading and localizes every unavailable section', fakeAsync(() => {
     const loading = signal(true);
     TestBed.overrideProvider(GoldPriceService, { useValue: {
-      loading: loading.asReadonly(), days: [], history: [], latest: null, sampleDate: null, purities: GOLD_PURITIES,
+      loading: loading.asReadonly(), failed: signal(false), days: [], history: [], latest: null, sampleDate: null, purities: GOLD_PURITIES,
     } });
     const { fixture, element } = render();
     const language = TestBed.inject(LanguageService);
@@ -169,7 +173,7 @@ describe('Dashboard loading and motion', () => {
     }
   }));
 
-  it('keeps section positions stable from skeleton to ready in both palettes and directions', fakeAsync(() => {
+  it('keeps skeleton dimensions stable and bounds wrapping changes for unknown API text', fakeAsync(() => {
     const { fixture, element } = render();
     const css = appCss();
     expect(css).not.toBe('');
@@ -202,7 +206,7 @@ describe('Dashboard loading and motion', () => {
           }
         }
       }
-      tick(SAMPLE_LOADING_DELAY_MS);
+      flushGoldPriceResponses();
       for (const { frame, context, rects } of frames) {
         const doc = frame.contentDocument!;
         TestBed.inject(LanguageService).setLanguage(doc.documentElement.lang as 'ar' | 'en');
@@ -211,8 +215,12 @@ describe('Dashboard loading and motion', () => {
         doc.body.replaceChildren(element.cloneNode(true));
         selectors.forEach((selector, index) => {
           const ready = doc.querySelector(selector)!.getBoundingClientRect();
-          expect(Math.abs(ready.top - rects[index].top)).withContext(`${context}: ${selector} position`).toBeLessThanOrEqual(1);
-          expect(Math.abs(ready.height - rects[index].height)).withContext(`${context}: ${selector} height`).toBeLessThanOrEqual(1);
+          // Dates/prices are genuinely unknown during HTTP loading. Their localized
+          // notices may wrap differently; allow at most two short lines of movement,
+          // without seeding skeletons with hidden runtime sample values.
+          expect(Math.abs(ready.top - rects[index].top)).withContext(`${context}: ${selector} position`).toBeLessThanOrEqual(48);
+          const textCanWrap = ['#prices', '#calculator', '#trends', '.trend-comparison'].includes(selector);
+          expect(Math.abs(ready.height - rects[index].height)).withContext(`${context}: ${selector} height`).toBeLessThanOrEqual(textCanWrap ? 48 : 1);
         });
         expect(doc.documentElement.scrollWidth).withContext(`${context}: ready overflow`).toBeLessThanOrEqual(frame.clientWidth);
       }
@@ -221,7 +229,7 @@ describe('Dashboard loading and motion', () => {
 
   it('uses short single-shot motion and disables decorative animation with the reduced-motion CSS rules', fakeAsync(() => {
     const { fixture, element } = render();
-    tick(SAMPLE_LOADING_DELAY_MS);
+    flushGoldPriceResponses();
     fixture.detectChanges();
     const frame = document.createElement('iframe');
     frame.title = 'Reduced motion CSS test';
