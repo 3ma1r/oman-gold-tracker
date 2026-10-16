@@ -41,3 +41,13 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# .NET build outputs and local Visual Studio files
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.suo
+*.rsuser
+*.userosscache
+*.sln.docstates
