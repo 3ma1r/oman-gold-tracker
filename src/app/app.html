@@ -14,6 +14,7 @@
       </section>
     }
     <app-todays-prices (useInCalculator)="calculator.usePrice($event)" />
+    <app-purity-explorer (useInCalculator)="calculator.usePrice($event)" />
     <app-gold-calculator #calculator />
     <app-price-trend />
     <app-price-history />

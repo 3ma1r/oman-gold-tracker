@@ -1,6 +1,20 @@
 export type Language = 'ar' | 'en';
 
 const ar = {
+  explorerTitle: 'استكشف نقاء الذهب',
+  explorerIntro: 'اختر العيار لتتعرف على مكوناته.',
+  explorerSelection: 'عيار الذهب للاستكشاف',
+  explorerGold: 'ذهب',
+  explorerOther: 'معادن أخرى',
+  explorerParts: '{gold} جزءاً من أصل {total} جزءاً هي ذهب.',
+  explorerBreakdown: '{gold} جزءاً من الذهب + {other} جزءاً من المعادن الأخرى',
+  explorerModelNote: 'يمثل العيار عدد أجزاء الذهب من أصل ٢٤ جزءاً. هذا نموذج مبسط؛ وقد تختلف درجة نقاء المنتج الفعلية.',
+  explorerDonutTitle: 'مكونات الذهب عيار {purity}',
+  explorerDonutDescription: '{gold} ذهب و{other} معادن أخرى في نموذج العيار المبسط.',
+  explorerSamplePrice: 'سعر تجريبي لكل غرام',
+  explorerPriceLoading: 'جارٍ تحميل الأسعار التجريبية.',
+  explorerPriceUnavailable: 'الأسعار التجريبية غير متاحة. يمكنك استكشاف مكونات العيارات دون أسعار.',
+  explorerUse: 'استخدم عيار {purity} في الحاسبة',
   playbackControls: 'تشغيل سجل الأسعار',
   playbackPlay: 'تشغيل',
   playbackPause: 'إيقاف مؤقت',
@@ -119,6 +133,20 @@ export type TranslationKey = keyof typeof ar;
 export type TranslationDictionary = Readonly<Record<TranslationKey, string>>;
 
 const en = {
+  explorerTitle: 'Explore gold purity',
+  explorerIntro: 'Choose a karat to see what it contains.',
+  explorerSelection: 'Gold purity to explore',
+  explorerGold: 'Gold',
+  explorerOther: 'Other metals',
+  explorerParts: '{gold} out of {total} parts are gold.',
+  explorerBreakdown: '{gold} parts gold + {other} parts other metals',
+  explorerModelNote: 'Karats describe parts of gold out of 24. This is a simplified model; actual product fineness may vary.',
+  explorerDonutTitle: '{purity}: purity breakdown',
+  explorerDonutDescription: '{gold} gold and {other} other metals in the simplified karat model.',
+  explorerSamplePrice: 'Sample price per gram',
+  explorerPriceLoading: 'Sample prices are loading.',
+  explorerPriceUnavailable: 'Sample prices are unavailable. You can still explore the purity breakdown.',
+  explorerUse: 'Use {purity} in calculator',
   playbackControls: 'Price history playback',
   playbackPlay: 'Play',
   playbackPause: 'Pause',

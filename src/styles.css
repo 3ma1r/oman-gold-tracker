@@ -108,11 +108,11 @@
   }
 }
 
-/* Shared page layout keeps the eight section components deliberately simple. */
+/* Shared page layout keeps the section components deliberately simple. */
 :root { --anchor-offset: 128px; }
 section[id], main[id] { scroll-margin-top: var(--anchor-offset); }
 app-header, app-hero, app-todays-prices, app-price-card,
-app-gold-calculator, app-price-trend, app-price-history, app-footer { display: block; min-width: 0; }
+app-purity-explorer, app-gold-calculator, app-price-trend, app-price-history, app-footer { display: block; min-width: 0; }
 .page-shell { width: min(1160px, calc(100% - 64px)); margin-inline: auto; }
 .page-sections { display: grid; gap: 22px; padding-block: 20px 28px; }
 .panel {
@@ -238,6 +238,51 @@ app-header header { border-block-end: 1px solid var(--theme-border); box-shadow:
   content: ''; position: absolute; inset-inline-start: 0; top: .4em;
   width: min(80%, 9ch); height: .85em; border-radius: 5px;
   background: var(--secondary-surface);
+}
+
+/* Educational karat model stays interactive even when prices are unavailable. */
+.explorer-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.explorer-badge { padding: 4px 12px; border-radius: 999px; font-size: .75rem; white-space: nowrap; }
+.explorer-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-block: 20px 24px; }
+.explorer-purity-button { min-height: 44px; padding: 9px 8px; border: 1px solid transparent; border-radius: 8px; background: var(--secondary-surface); color: var(--primary-text); font-size: .87rem; }
+.explorer-purity-button:hover { border-color: var(--control-border); }
+.explorer-purity-button[aria-pressed="true"] { background: var(--action-background); color: var(--action-text); }
+.explorer-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.explorer-visual { display: grid; justify-items: center; align-content: start; gap: 18px; }
+.explorer-donut { position: relative; width: min(260px, 100%); aspect-ratio: 1; }
+.explorer-donut svg { width: 100%; height: 100%; }
+.explorer-other-ring { stroke: var(--color-taupe); }
+.explorer-gold-ring { stroke: var(--gold-accent); }
+.explorer-donut-label { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: none; font-size: .9rem; }
+.explorer-donut-label strong { font-size: clamp(1.4rem, 5vw, 2rem); line-height: 1.4; }
+.explorer-donut-label > span { font-size: .75rem; }
+.explorer-legend { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: .85rem; }
+.explorer-legend li { display: flex; align-items: center; gap: 10px; }
+.explorer-swatch { display: inline-block; width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; border: 1px solid var(--control-border); }
+.explorer-swatch-gold { background: var(--gold-accent); }
+.explorer-swatch-other { background: var(--color-taupe); }
+.explorer-explanation { min-width: 0; }
+.explorer-explanation h3 { font-size: 1.3rem; }
+.explorer-explanation > p { font-size: .9rem; }
+.explorer-tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; margin-block: 18px 10px; }
+.explorer-tile { aspect-ratio: 1; border-radius: 5px; background: var(--color-taupe); border: 1px solid var(--control-border); }
+.explorer-tile.explorer-tile-gold { background: var(--gold-accent); }
+.explorer-model-note { margin-block-start: 12px; }
+.explorer-price-panel { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 16px; margin-block-start: 20px; border: 1px solid var(--theme-border); border-radius: 10px; }
+.explorer-price-panel > div { flex: 1 1 230px; min-width: 0; }
+.explorer-price-label { font-size: .85rem; }
+.explorer-price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; font-size: 1.8rem; font-weight: 650; overflow-wrap: anywhere; }
+.explorer-price > span { font-size: .8rem; font-weight: 400; }
+.explorer-date, .explorer-availability { font-size: .75rem; }
+.explorer-availability { min-height: 2lh; }
+.explorer-use-button { font-size: .85rem; max-width: 100%; }
+@media (min-width: 640px) {
+  .explorer-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .explorer-tiles { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .explorer-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); align-items: center; gap: 32px; }
+  .explorer-explanation { border-inline-start: 1px solid var(--theme-border); padding-inline-start: 32px; }
 }
 
 /* Calculator */

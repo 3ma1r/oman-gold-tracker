@@ -94,7 +94,7 @@ describe('Dashboard language switching', () => {
       expect(element.querySelector('label[for="gold-purity"]')?.textContent).toBe(text.purityLabel);
       expect(element.querySelector('label[for="gold-weight"]')?.textContent).toBe(text.weightLabel);
       expect(element.querySelector<HTMLInputElement>('#gold-weight')?.placeholder).toBe(text.weightPlaceholder);
-      expect(element.querySelector('.calculate-button')?.textContent).toBe(text.calculate);
+      expect(element.querySelector('#calculator .calculate-button')?.textContent).toBe(text.calculate);
       expect(element.querySelector('.result-value')?.getAttribute('aria-label')).toBe(text.calculationEmpty);
       expect(element.querySelector('#calculator-note')?.textContent).toContain(text.estimateAfterDate);
       expect(element.querySelector('#trends-title')?.textContent).toBe(text.trends);
@@ -140,7 +140,7 @@ describe('Dashboard language switching', () => {
       expect(details[2].textContent).toBe(language.currency(prices.latest!.prices[22]));
       expect(chart.selectedPurity()).toBe(18);
       expect(chart.trend()).toBe(trend);
-      expect(element.querySelector('button[aria-pressed="true"]')?.getAttribute('data-purity')).toBe('18');
+      expect(element.querySelector('#trends button[aria-pressed="true"]')?.getAttribute('data-purity')).toBe('18');
       expect(element.querySelector('polyline')?.getAttribute('points')).toBe(trend.line);
       expect(element.querySelector('.price-chart desc')?.textContent).toBe(chart.chartDescription());
       expect(chart.chartDescription()).toContain(language.purity(18));

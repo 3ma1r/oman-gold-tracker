@@ -149,7 +149,7 @@ describe('Dashboard theme switching', () => {
           expect(element.querySelector<HTMLInputElement>('#gold-weight')?.value).toBe(weight);
           expect(element.querySelector<HTMLSelectElement>('#gold-purity')?.value).toBe('22');
           expect(element.querySelector('.result-value')?.textContent).toBe('—');
-          expect(element.querySelector('button[aria-pressed="true"]')?.getAttribute('data-purity')).toBe('21');
+          expect(element.querySelector('#trends button[aria-pressed="true"]')?.getAttribute('data-purity')).toBe('21');
         }
       }
     });
@@ -195,6 +195,7 @@ describe('Dashboard theme switching', () => {
       '.trend-stats dt', '.trend-stats dd', '.trend-stats span', '.purity-tab', '.comparison-grid dt',
       '.comparison-grid dd', '.chart-y-axis', '.chart-dates', '.history-scroll th', '.history-scroll td',
       '.footer-brand', '.copyright',
+      '.explorer-purity-button', '.explorer-legend', '.explorer-model-note', '.explorer-price', '.explorer-price > span', '.explorer-date', '.explorer-badge',
     ];
     for (const mode of ['light', 'dark'] as const) {
       theme.setTheme(mode);

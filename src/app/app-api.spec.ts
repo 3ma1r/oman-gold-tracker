@@ -94,8 +94,8 @@ describe('Dashboard API integration', () => {
         expect(element.querySelector('.chart-tooltip time')?.getAttribute('datetime')).toBe(latest.date);
         expect(element.querySelector('.chart-tooltip')?.textContent).toContain(lang.price(latest.prices[purity]));
         expect(element.querySelector('.chart-tooltip')?.textContent).toContain(lang.purity(purity));
-        expect(element.querySelector('svg desc')?.textContent).toContain(lang.date(API_DAYS[0].date));
-        expect(element.querySelector('svg desc')?.textContent).toContain(lang.date(latest.date));
+        expect(element.querySelector('#trends svg desc')?.textContent).toContain(lang.date(API_DAYS[0].date));
+        expect(element.querySelector('#trends svg desc')?.textContent).toContain(lang.date(latest.date));
         expect(element.querySelector('.chart-selection-announcement')?.textContent).toContain(lang.price(latest.prices[purity]));
       }
     }

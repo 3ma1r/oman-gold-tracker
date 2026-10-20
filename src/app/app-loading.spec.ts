@@ -56,7 +56,7 @@ describe('Dashboard loading and motion', () => {
     expect(element.querySelectorAll('tbody tr[aria-hidden="true"]').length).toBe(30);
     expect(element.querySelector('.chart-skeleton')).not.toBeNull();
     expect(element.querySelector('svg.price-chart')).toBeNull();
-    expect(element.querySelectorAll('[aria-busy="true"]').length).toBe(4);
+    expect(element.querySelectorAll('[aria-busy="true"]').length).toBe(5);
     element.querySelectorAll('.skeleton').forEach(node => expect(node.getAttribute('aria-hidden')).toBe('true'));
     expect(element.querySelector('.chart-empty, .prices-empty')).toBeNull();
     const http = TestBed.inject(HttpTestingController);
@@ -80,7 +80,7 @@ describe('Dashboard loading and motion', () => {
     const calculator = fixture.debugElement.query(By.directive(GoldCalculator)).componentInstance as GoldCalculator;
     const input = element.querySelector<HTMLInputElement>('#gold-weight')!;
     const select = element.querySelector<HTMLSelectElement>('#gold-purity')!;
-    const button = element.querySelector<HTMLButtonElement>('.calculate-button')!;
+    const button = element.querySelector<HTMLButtonElement>('#calculator .calculate-button')!;
     input.value = '2.5';
     input.dispatchEvent(new Event('input', { bubbles: true }));
     select.value = '21';
@@ -139,7 +139,7 @@ describe('Dashboard loading and motion', () => {
       expect(element.querySelector('.skeleton')).toBeNull();
       expect(element.querySelector('#trends')?.getAttribute('data-transition')).toBe(String(purity));
       expect(element.querySelector('polyline')?.getAttribute('points')).toBe(chart.trend().line);
-      expect(element.querySelector('svg desc')?.textContent).toBe(chart.chartDescription());
+      expect(element.querySelector('#trends svg desc')?.textContent).toBe(chart.chartDescription());
     }
     TestBed.inject(HttpTestingController).expectNone(() => true);
   }));
@@ -270,7 +270,7 @@ describe('Dashboard loading and motion', () => {
       const chart = fixture.debugElement.query(By.directive(PriceTrend)).componentInstance as PriceTrend;
       chart.selectedPurity.set(21);
       fixture.detectChanges();
-      expect(element.querySelector('svg desc')?.textContent).toBe(chart.chartDescription());
+      expect(element.querySelector('#trends svg desc')?.textContent).toBe(chart.chartDescription());
       expect(element.querySelector('.trend-stats dd > bdi')?.textContent).toBe(TestBed.inject(LanguageService).price(chart.trend().latest));
     } finally { frame.remove(); }
   }));
