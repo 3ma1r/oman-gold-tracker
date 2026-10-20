@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { DateOnly, GoldPurity } from '../models/gold-price';
 import { GoldPriceService } from '../services/gold-price.service';
 import { LanguageService } from '../services/language.service';
@@ -22,7 +23,7 @@ import { buildPriceTrend, CHART_HEIGHT, CHART_WIDTH } from './price-trend-chart'
           </div>
           <div class="purity-tabs" role="group" [attr.aria-label]="lang.t('chartPurity')">
             @for (purity of purities; track purity) {
-              <button class="purity-tab" type="button" [attr.data-purity]="purity" [attr.aria-pressed]="selectedPurity() === purity" (click)="selectedPurity.set(purity)">{{ lang.purity(purity) }}</button>
+              <button class="purity-tab" type="button" [attr.data-purity]="purity" [attr.aria-pressed]="selectedPurity() === purity" [disabled]="goldPrices.loading() || !goldPrices.days.length" (click)="selectedPurity.set(purity)">{{ lang.purity(purity) }}</button>
             }
           </div>
         </div>
@@ -32,7 +33,8 @@ import { buildPriceTrend, CHART_HEIGHT, CHART_WIDTH } from './price-trend-chart'
           <div><dt class="text-muted">{{ lang.t('lowest') }}</dt><dd [attr.aria-hidden]="goldPrices.loading() ? 'true' : null">@if (goldPrices.loading()) { <span class="skeleton skeleton-text skeleton-stat" aria-hidden="true"><bdi>{{ lang.price(trend().lowest) }}</bdi></span> } @else { <bdi>{{ lang.price(trend().lowest) }}</bdi> }<span class="stat-unit text-muted">{{ lang.t('rialPerGram') }}</span></dd></div>
         </dl>
       </div>
-      <div class="trend-comparison" [class.comparison-loading]="goldPrices.loading()" [attr.aria-hidden]="goldPrices.loading() ? 'true' : null" aria-live="polite" aria-atomic="true">
+      <!-- Shared network status announces readiness; chart keyboard selections have their own live region. -->
+      <div class="trend-comparison" [class.comparison-loading]="goldPrices.loading()" [attr.aria-hidden]="goldPrices.loading() ? 'true' : null">
         <p class="comparison-heading">{{ lang.t('comparisonHeading', { purity: lang.purity(selectedPurity()) }) }}</p>
         <dl class="comparison-grid">
           <div><dt>{{ lang.t('latestPrice') }} <time [attr.datetime]="trend().series.at(-1)?.date">{{ lastDate() }}</time></dt><dd><bdi>{{ lang.price(trend().latest) }}</bdi> {{ lang.t('rialPerGram') }}</dd></div>
@@ -109,11 +111,30 @@ import { buildPriceTrend, CHART_HEIGHT, CHART_WIDTH } from './price-trend-chart'
       } @else {
         <p class="chart-empty text-muted">{{ lang.t('chartEmpty') }}</p>
       }
+      <div class="chart-playback" dir="ltr" role="group" [attr.aria-label]="lang.t('playbackControls')">
+        <div class="playback-toolbar">
+          <button class="playback-button playback-toggle" type="button" [attr.dir]="lang.direction()" [disabled]="!playbackReady() || trend().series.length < 2" (click)="togglePlayback()">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              @if (playing()) { <path d="M5 3h3v14H5zM12 3h3v14h-3z" /> }
+              @else { <path d="m5 3 12 7-12 7z" /> }
+            </svg>
+            {{ lang.t(playing() ? 'playbackPause' : 'playbackPlay') }}
+          </button>
+          <button class="playback-button playback-restart" type="button" [attr.dir]="lang.direction()" [disabled]="!playbackReady()" (click)="restartPlayback()">{{ lang.t('playbackRestart') }}</button>
+          <div class="playback-position" [attr.dir]="lang.direction()">
+            <span>{{ playbackDayLabel() }}</span>
+            <time [attr.datetime]="playbackDate()">{{ playbackDate() ? lang.date(playbackDate()!) : '—' }}</time>
+          </div>
+        </div>
+        <label for="trend-date-slider" class="sr-only">{{ lang.t('playbackSlider') }}</label>
+        <input #dateSlider id="trend-date-slider" class="playback-slider" type="range" min="0" step="1" [max]="sliderMaximum()" [value]="playbackIndex()" [disabled]="!playbackReady() || trend().series.length < 2" [attr.aria-valuetext]="sliderValueText()" (pointerdown)="pausePlayback()" (focus)="pausePlayback()" (input)="seekPlayback(dateSlider.value)" />
+      </div>
       <p class="sr-only chart-selection-announcement" role="status" aria-live="polite" aria-atomic="true">{{ selectionAnnouncement() }}</p>
     </section>
   `,
 })
 export class PriceTrend {
+  private readonly document = inject(DOCUMENT);
   protected readonly goldPrices = inject(GoldPriceService);
   protected readonly lang = inject(LanguageService);
   readonly purities = this.goldPrices.purities;
@@ -121,6 +142,27 @@ export class PriceTrend {
   readonly selectedDate = signal<DateOnly | null>(null);
   readonly hoverDate = signal<DateOnly | null>(null);
   private readonly keyboardSelection = signal<'value' | 'cleared' | null>(null);
+  readonly playing = signal(false);
+  private playbackTimer: ReturnType<typeof setInterval> | null = null;
+
+  constructor() {
+    effect(() => {
+      this.goldPrices.loadId();
+      this.pausePlayback();
+      this.selectedDate.set(null);
+      this.hoverDate.set(null);
+      this.keyboardSelection.set(null);
+    });
+    effect(() => {
+      if (this.goldPrices.loading() || !this.goldPrices.days.length) this.pausePlayback();
+    });
+    const onVisibilityChange = () => { if (this.document.hidden) this.pausePlayback(); };
+    this.document.addEventListener('visibilitychange', onVisibilityChange);
+    inject(DestroyRef).onDestroy(() => {
+      this.pausePlayback();
+      this.document.removeEventListener('visibilitychange', onVisibilityChange);
+    });
+  }
   readonly trend = computed(() => buildPriceTrend(this.goldPrices.days, this.selectedPurity()));
   readonly selectedPoint = computed(() => this.trend().points.find(point => point.day.date === this.selectedDate()) ?? null);
   readonly tooltipPoint = computed(() => this.trend().points.find(point => point.day.date === this.hoverDate()) ?? this.selectedPoint());
@@ -153,6 +195,59 @@ export class PriceTrend {
     firstPrice: this.lang.price(this.trend().points[0]?.value ?? null), lastPrice: this.lang.price(this.trend().latest),
     movement: this.movement(),
   }));
+  readonly playbackReady = computed(() => !this.goldPrices.loading() && this.trend().series.length > 0);
+  // An unselected chart previews the start in its controls; Play selects it.
+  // Escape can still clear the existing chart marker and tooltip.
+  readonly playbackIndex = computed(() => Math.max(0, this.trend().series.findIndex(day => day.date === this.selectedDate())));
+  readonly sliderMaximum = computed(() => Math.max(0, this.trend().series.length - 1));
+  readonly playbackDate = computed(() => this.trend().series[this.playbackIndex()]?.date ?? null);
+  readonly playbackDayLabel = computed(() => this.lang.t('playbackDay', {
+    day: this.lang.number(this.trend().series.length ? this.playbackIndex() + 1 : 0), count: this.lang.number(this.trend().series.length),
+  }));
+  readonly sliderValueText = computed(() => {
+    const date = this.playbackDate();
+    if (!date) return this.lang.t('chartEmpty');
+    return `${this.playbackDayLabel()}. ${this.lang.t('chartSelectionValue', {
+      date: this.lang.date(date), purity: this.lang.purity(this.selectedPurity()),
+      price: this.lang.price(this.trend().series[this.playbackIndex()].prices[this.selectedPurity()]), unit: this.lang.t('rialPerGram'),
+    })}`;
+  });
+
+  togglePlayback(): void {
+    if (this.playing()) { this.pausePlayback(); return; }
+    if (!this.playbackReady() || this.trend().series.length < 2 || this.document.hidden) return;
+    this.hoverDate.set(null);
+    this.keyboardSelection.set(null); // Never announce the automatic one-second ticks.
+    const index = !this.selectedDate() || this.playbackIndex() === this.sliderMaximum() ? 0 : this.playbackIndex();
+    this.selectedDate.set(this.trend().series[index].date);
+    this.playing.set(true);
+    this.playbackTimer = setInterval(() => {
+      if (!this.playbackReady() || this.document.hidden) { this.pausePlayback(); return; }
+      const next = Math.min(this.playbackIndex() + 1, this.sliderMaximum());
+      this.selectedDate.set(this.trend().series[next].date);
+      if (next === this.sliderMaximum()) this.pausePlayback();
+    }, 1000);
+  }
+
+  pausePlayback(): void {
+    if (this.playbackTimer !== null) clearInterval(this.playbackTimer);
+    this.playbackTimer = null;
+    this.playing.set(false);
+  }
+
+  restartPlayback(): void {
+    if (!this.playbackReady()) return;
+    this.seekPlayback('0');
+  }
+
+  seekPlayback(value: string): void {
+    const index = Number(value);
+    if (!this.playbackReady() || !Number.isInteger(index)) return;
+    this.pausePlayback();
+    this.selectedDate.set(this.trend().series[Math.max(0, Math.min(index, this.sliderMaximum()))].date);
+    this.hoverDate.set(null);
+    this.keyboardSelection.set('value');
+  }
 
   private nearestDate(event: MouseEvent, svg: Element): DateOnly | null {
     const rect = svg.getBoundingClientRect();
@@ -167,9 +262,10 @@ export class PriceTrend {
   selectPoint(event: MouseEvent, svg: Element): void {
     const date = this.nearestDate(event, svg);
     if (!date) return;
+    this.pausePlayback();
     this.selectedDate.set(date);
     this.hoverDate.set(null);
-    this.keyboardSelection.set(null);
+    this.keyboardSelection.set('value');
   }
 
   previewPoint(event: PointerEvent, svg: Element): void {
@@ -182,6 +278,7 @@ export class PriceTrend {
     const keys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Escape'];
     if (!keys.includes(event.key)) return;
     event.preventDefault();
+    this.pausePlayback();
     this.hoverDate.set(null);
     if (event.key === 'Escape') {
       this.selectedDate.set(null);

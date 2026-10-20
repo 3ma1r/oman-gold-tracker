@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, ElementRef, inject, viewChild } from '@angular/core';
+import { Component, effect, ElementRef, inject, viewChild } from '@angular/core';
 import { GoldPurity } from '../models/gold-price';
 import { GoldPriceService } from '../services/gold-price.service';
 import { LanguageService } from '../services/language.service';
@@ -52,7 +52,7 @@ interface GoldCalculation {
           <p id="calculator-error" class="validation-message text-accent" role="alert" aria-atomic="true">{{ error }}</p>
           <p id="calculator-note" class="control-note text-muted">{{ lang.t('estimateBeforeDate') }} <time [attr.datetime]="goldPrices.sampleDate">{{ goldPrices.sampleDate ? lang.date(goldPrices.sampleDate) : '—' }}</time>{{ lang.t('estimateAfterDate') }}</p>
         </div>
-        <div class="calculator-result bg-secondary" aria-labelledby="result-title" role="status" aria-live="polite" aria-atomic="true">
+        <div class="calculator-result bg-secondary" aria-labelledby="result-title" role="status" [attr.aria-live]="canCalculate ? 'polite' : 'off'" aria-atomic="true">
           <svg class="result-icon text-gold" [class.calculator-empty-icon]="!result" viewBox="0 0 40 40" fill="none" aria-hidden="true">
             <ellipse cx="25" cy="8" rx="10" ry="4" stroke="currentColor" stroke-width="1.5" />
             <path d="M15 8v14c0 5 20 5 20 0V8M15 13c0 5 20 5 20 0M15 18c0 5 20 5 20 0" stroke="currentColor" stroke-width="1.5" />
@@ -91,6 +91,13 @@ export class GoldCalculator {
   weightGrams: number | null = null;
   result: GoldCalculation | null = null;
   private errorKey: 'invalidWeight' | 'overflowingTotal' | null = null;
+
+  constructor() {
+    effect(() => {
+      this.goldPrices.loadId();
+      this.clearResult();
+    });
+  }
 
   get error(): string { return this.errorKey ? this.lang.t(this.errorKey) : ''; }
   get canCalculate(): boolean { return !this.goldPrices.loading() && this.goldPrices.latest !== null; }

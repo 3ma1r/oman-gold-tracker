@@ -1,9 +1,10 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, map, timeout } from 'rxjs';
+import { forkJoin, map, throwIfEmpty, timeout, TimeoutError } from 'rxjs';
 import { DateOnly, DailyGoldPrice, GOLD_PURITIES, GoldPurity } from '../models/gold-price';
 import { GoldPriceApiMetadata, GoldPriceHistoryResponse, LatestGoldPricesResponse } from '../models/gold-price-api';
-import { GoldPriceApiService } from './gold-price-api.service';
+import { ApiConfigurationError, GoldPriceApiService } from './gold-price-api.service';
 
 /** A deadline for genuinely stalled requests, not a simulated loading delay. */
 export const PRICE_LOAD_TIMEOUT_MS = 15_000;
@@ -13,13 +14,24 @@ interface PriceDataset {
   readonly history: readonly DailyGoldPrice[];
   readonly latest: DailyGoldPrice;
 }
-type PriceState = { status: 'loading' | 'error'; data: null } | { status: 'ready'; data: PriceDataset };
+export type PriceLoadFailure = 'connection' | 'server' | 'invalidResponse' | 'configuration' | 'timeout';
+interface PriceState {
+  status: 'idle' | 'loading' | 'error' | 'ready';
+  data: PriceDataset | null;
+  failure: PriceLoadFailure | null;
+  loadId: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class GoldPriceService {
-  private readonly state = signal<PriceState>({ status: 'loading', data: null });
+  private readonly api = inject(GoldPriceApiService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly state = signal<PriceState>({ status: 'idle', data: null, failure: null, loadId: 0 });
   readonly loading = computed(() => this.state().status === 'loading');
   readonly failed = computed(() => this.state().status === 'error');
+  // Retain the previous failure during retry so its button stays present, disabled.
+  readonly failure = computed(() => this.state().failure);
+  readonly loadId = computed(() => this.state().loadId);
   readonly purities = GOLD_PURITIES;
   // Getters preserve existing component bindings while tracking the shared signal.
   get days(): readonly DailyGoldPrice[] { return this.state().data?.days ?? EMPTY_DAYS; }
@@ -28,16 +40,35 @@ export class GoldPriceService {
   get sampleDate(): DateOnly | null { return this.latest?.date ?? null; }
 
   constructor() {
-    const api = inject(GoldPriceApiService);
-    forkJoin({ latest: api.getLatest(), history: api.getHistory() }).pipe(
+    this.retry();
+  }
+
+  /** One coordinated load per explicit attempt; never retry automatically. */
+  retry(): void {
+    if (this.loading() || this.destroyRef.destroyed) return;
+    const loadId = this.state().loadId + 1;
+    this.state.set({ status: 'loading', data: null, failure: this.failure(), loadId });
+    forkJoin({ latest: this.api.getLatest(), history: this.api.getHistory() }).pipe(
       timeout(PRICE_LOAD_TIMEOUT_MS),
+      throwIfEmpty(() => new Error('The price requests completed without data.')),
       map(({ latest, history }) => validateDataset(latest, history)),
-      takeUntilDestroyed(inject(DestroyRef)),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe({
-      next: data => this.state.set({ status: 'ready', data }),
-      error: () => this.state.set({ status: 'error', data: null }),
+      next: data => this.state.set({ status: 'ready', data, failure: null, loadId }),
+      error: error => this.state.set({ status: 'error', data: null, failure: classifyFailure(error), loadId }),
     });
   }
+}
+
+function classifyFailure(error: unknown): PriceLoadFailure {
+  if (error instanceof ApiConfigurationError) return 'configuration';
+  if (error instanceof TimeoutError) return 'timeout';
+  if (error instanceof HttpErrorResponse) {
+    if (error.status === 0) return 'connection';
+    // HttpClient reports malformed JSON as an HTTP error even for a 200 response.
+    return error.status >= 200 && error.status < 300 ? 'invalidResponse' : 'server';
+  }
+  return 'invalidResponse';
 }
 
 function hasSampleMetadata(value: GoldPriceApiMetadata | null | undefined): boolean {

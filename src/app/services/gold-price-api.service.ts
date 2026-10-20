@@ -4,6 +4,11 @@ import { Observable, throwError } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
 import { GoldPriceHistoryResponse, GoldPriceResponse, LatestGoldPricesResponse } from '../models/gold-price-api';
 
+/** A typed configuration failure so the UI never has to inspect raw error text. */
+export class ApiConfigurationError extends Error {
+  constructor() { super('Gold-price API base URL is not configured.'); }
+}
+
 /** Typed HTTP transport; shared loading and validation belong to GoldPriceService. */
 @Injectable({ providedIn: 'root' })
 export class GoldPriceApiService {
@@ -25,7 +30,7 @@ export class GoldPriceApiService {
 
   private get<T>(path: string): Observable<T> {
     if (!this.baseUrl) {
-      return throwError(() => new Error('Gold-price API base URL is not configured.'));
+      return throwError(() => new ApiConfigurationError());
     }
     return this.http.get<T>(`${this.baseUrl}${path}`);
   }

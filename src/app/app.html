@@ -3,9 +3,15 @@
 <main id="main-content" tabindex="-1">
   <app-hero />
   <div class="page-shell page-sections">
-    <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ goldPrices.failed() ? '' : lang.t(goldPrices.loading() ? 'sampleLoading' : goldPrices.days.length ? 'sampleReady' : 'pricesEmpty') }}</p>
-    @if (goldPrices.failed()) {
-      <p class="panel bg-card text-primary" role="alert">{{ lang.t('pricesLoadFailed') }}</p>
+    <p class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ loadAnnouncement() }}</p>
+    @if (goldPrices.failure(); as failure) {
+      <section class="price-error-panel panel bg-card text-primary" role="region" aria-labelledby="prices-error-title" [attr.aria-busy]="goldPrices.loading()">
+        <div>
+          <h2 id="prices-error-title">{{ lang.t('pricesErrorTitle') }}</h2>
+          <p id="prices-error-description" class="text-muted">{{ lang.t(failureMessages[failure]) }}</p>
+        </div>
+        <button class="retry-button calculate-button" type="button" [disabled]="goldPrices.loading()" aria-describedby="prices-error-description" (click)="goldPrices.retry()">{{ lang.t(goldPrices.loading() ? 'pricesRetrying' : 'pricesRetry') }}</button>
+      </section>
     }
     <app-todays-prices (useInCalculator)="calculator.usePrice($event)" />
     <app-gold-calculator #calculator />

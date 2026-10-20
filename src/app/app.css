@@ -1,1 +1,7 @@
 :host { display: block; }
+
+.price-error-panel { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.price-error-panel > div { flex: 1 1 260px; min-width: 0; }
+.price-error-panel h2 { font-size: 1.1rem; }
+.price-error-panel p { font-size: .9rem; }
+.retry-button { flex-shrink: 0; }

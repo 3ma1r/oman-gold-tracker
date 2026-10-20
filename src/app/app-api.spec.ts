@@ -125,13 +125,14 @@ describe('Dashboard API integration', () => {
       const lang = TestBed.inject(LanguageService);
       for (const language of ['en', 'ar'] as const) {
         lang.setLanguage(language); fixture.detectChanges();
-        const alert = element.querySelector('.page-sections > [role="alert"]');
-        expect(alert?.textContent).toBe(TRANSLATIONS[language].pricesLoadFailed);
-        expect(element.querySelector('.page-sections > [role="status"]')?.textContent).toBe('');
+        const message = TRANSLATIONS[language][failure === 'http' ? 'pricesServerError' : failure === 'network' ? 'pricesConnectionError' : 'pricesInvalidError'];
+        expect(element.querySelector('#prices-error-description')?.textContent).toBe(message);
+        expect(element.querySelector('.page-sections > [role="status"]')?.textContent).toContain(message);
+        expect(element.querySelector('.price-error-panel')?.getAttribute('role')).toBe('region');
         expect(element.querySelector('[aria-busy="true"], .skeleton, .price-value, .price-chart')).toBeNull();
         expect(element.querySelector('tbody time')).toBeNull();
         expect(element.querySelector('app-hero time')?.getAttribute('datetime')).toBeNull();
-        expect(element.querySelector<HTMLButtonElement>('.calculate-button')?.disabled).toBeTrue();
+        expect(element.querySelector<HTMLButtonElement>('#calculator .calculate-button')?.disabled).toBeTrue();
         expect(TestBed.inject(GoldPriceService).days).toEqual([]);
       }
       http.expectNone(() => true);

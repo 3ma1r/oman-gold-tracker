@@ -130,7 +130,7 @@ describe('PriceTrend', () => {
 
   function render(days?: readonly DailyGoldPrice[]) {
     if (days) {
-      TestBed.overrideProvider(GoldPriceService, { useValue: { days, purities: GOLD_PURITIES, loading: signal(false) } });
+      TestBed.overrideProvider(GoldPriceService, { useValue: { days, purities: GOLD_PURITIES, loading: signal(false), loadId: signal(1) } });
     }
     if (!days) flushGoldPriceResponses();
     const fixture = TestBed.createComponent(PriceTrend);

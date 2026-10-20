@@ -118,7 +118,9 @@ describe('Dashboard loading and motion', () => {
     const chart = fixture.debugElement.query(By.directive(PriceTrend)).componentInstance as PriceTrend;
     language.setLanguage('en');
     theme.setTheme('dark');
-    element.querySelector<HTMLButtonElement>('[data-purity="18"]')!.click();
+    // A saved selection is retained while price-dependent chart buttons are disabled.
+    chart.selectedPurity.set(18);
+    expect(element.querySelector<HTMLButtonElement>('[data-purity="18"]')!.disabled).toBeTrue();
     fixture.detectChanges();
     expect(prices.loading()).toBeTrue();
     expect(element.querySelector('.page-sections > [role="status"]')?.textContent).toBe(TRANSLATIONS.en.sampleLoading);
@@ -145,7 +147,7 @@ describe('Dashboard loading and motion', () => {
   it('distinguishes genuinely empty records from loading and localizes every unavailable section', fakeAsync(() => {
     const loading = signal(true);
     TestBed.overrideProvider(GoldPriceService, { useValue: {
-      loading: loading.asReadonly(), failed: signal(false), days: [], history: [], latest: null, sampleDate: null, purities: GOLD_PURITIES,
+      loading: loading.asReadonly(), failed: signal(false), failure: signal(null), loadId: signal(1), days: [], history: [], latest: null, sampleDate: null, purities: GOLD_PURITIES,
     } });
     const { fixture, element } = render();
     const language = TestBed.inject(LanguageService);
