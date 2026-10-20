@@ -1,0 +1,17 @@
+**/bin/
+**/obj/
+**/.git/
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.user
+**/*.suo
+**/*.http
+**/*.log
+**/.env
+**/.env.*
+**/*.pfx
+**/*.p12
+Properties/launchSettings.json
+Dockerfile
+.dockerignore
