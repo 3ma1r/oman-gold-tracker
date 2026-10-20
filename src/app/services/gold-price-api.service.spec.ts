@@ -112,8 +112,8 @@ describe('Gold-price API address configuration', () => {
   beforeEach(() => TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] }));
   afterEach(() => TestBed.inject(HttpTestingController).verify());
 
-  it('leaves the default/production API address unconfigured', () => {
-    expect(TestBed.inject(API_BASE_URL)).toBeNull();
+  it('uses the deployed API base address in production', () => {
+    expect(TestBed.inject(API_BASE_URL)).toBe('https://oman-gold-api.onrender.com');
   });
 
   it('configures localhost only in the development environment', () => {
