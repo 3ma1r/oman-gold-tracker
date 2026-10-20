@@ -214,7 +214,7 @@ app-header header { border-block-end: 1px solid var(--theme-border); box-shadow:
 .price-card-heading { display: flex; align-items: center; justify-content: center; gap: 10px; }
 .price-card-heading svg { width: 28px; height: 25px; }
 .price-card h3 { font-size: 1rem; font-weight: 650; }
-.price-value { font-size: 2.65rem; font-weight: 650; line-height: 1.35; margin-block: 10px 4px; font-variant-numeric: tabular-nums; }
+.price-value { font-size: 2.4rem; font-weight: 650; line-height: 1.35; margin-block: 10px 4px; font-variant-numeric: tabular-nums; }
 .price-unit { font-size: .88rem; }
 .prices-empty { text-align: center; min-height: 170px; display: grid; place-items: center; }
 
@@ -467,6 +467,14 @@ app-header header { border-block-end: 1px solid var(--theme-border); box-shadow:
 @media (max-width: 767px) {
   .page-shell { width: calc(100% - 32px); }
   .panel { padding: 20px 16px; }
+  #purity-explorer { padding-block: 16px; }
+  #purity-explorer .explorer-tabs { margin-block: 16px 18px; }
+  #purity-explorer .explorer-layout { gap: 18px; }
+  #purity-explorer .explorer-visual { gap: 12px; }
+  #purity-explorer .explorer-donut { width: min(220px, 100%); }
+  #purity-explorer .explorer-tiles { margin-block: 12px 8px; }
+  #purity-explorer .explorer-tile { aspect-ratio: 1.5; max-height: 32px; }
+  #purity-explorer .explorer-price-panel { padding: 12px; gap: 12px; margin-block-start: 16px; }
   .price-card { min-height: 183px; padding-block-end: 48px; }
   .section-heading { gap: 10px; }
   .section-heading h2 { font-size: 1.25rem; }
